@@ -29,12 +29,28 @@ function Get-OnlineDevices {
         ForEach-Object { ($_ -split '\s+')[0] })
 }
 
+# An emulator answers to two names at once: adb names it for its console port
+# and listens on the next port up, so `emulator-5556` and `127.0.0.1:5557` are
+# one device. Connecting over loopback registers that second alias, and the
+# pair then reads as two devices and fails the "exactly one" check below.
+# Aliases also survive in the adb server between runs, so filter rather than
+# just avoid creating them.
+function Remove-DuplicateAliases([string[]]$devices) {
+    $aliases = @()
+    foreach ($d in $devices) {
+        if ($d -match '^emulator-(\d+)$') { $aliases += "127.0.0.1:$([int]$Matches[1] + 1)" }
+    }
+    @($devices | Where-Object { $aliases -notcontains $_ })
+}
+
 # BlueStacks listens on a loopback port that it REASSIGNS between restarts —
 # 5555 one run, 5556 the next — so it silently disappears from `adb devices`
-# after every geometry change. Probing the usual ports re-attaches it before we
-# go looking. Harmless when only an emulator is attached.
-foreach ($p in 5555, 5556, 5557) {
-    & $global:ADB connect "127.0.0.1:$p" 2>&1 | Out-Null
+# after every geometry change. Probe only when nothing is attached yet, so we
+# never manufacture an alias for an emulator that is already present.
+if ((Get-OnlineDevices).Count -eq 0) {
+    foreach ($p in 5555, 5556, 5557) {
+        & $global:ADB connect "127.0.0.1:$p" 2>&1 | Out-Null
+    }
 }
 
 # Pick a device: the override if it is actually online, else the only one
@@ -43,7 +59,7 @@ foreach ($p in 5555, 5556, 5557) {
 # @() is load-bearing: a one-element array unrolls to a bare string on
 # assignment, and then $online[0] indexes the *string* and yields "1" from
 # "127.0.0.1:5556" — which fails later as a device id that does not exist.
-$online = @(Get-OnlineDevices)
+$online = @(Remove-DuplicateAliases (Get-OnlineDevices))
 
 if ($env:MCC_DEVICE -and $online -contains $env:MCC_DEVICE) {
     $global:DEV = $env:MCC_DEVICE
@@ -147,10 +163,17 @@ function Tap-XY([int]$X, [int]$Y, [int]$SettleMs = 1500) {
 function Type-Text($Text) { A shell input text $Text | Out-Null; Start-Sleep -Milliseconds 400 }
 
 # Stops the soft IME appearing at all, so nothing ever covers a field and
-# Hide-Keyboard has no work to do. Runtimes that present a hardware keyboard
-# (BlueStacks) still accept `input text` with this set. Called once at startup.
+# Hide-Keyboard has no work to do.
+#
+# OPT-IN ONLY, via $env:MCC_SUPPRESS_IME=1, and only worth it on BlueStacks.
+# It needs a hardware keyboard behind it: BlueStacks has one and still accepts
+# `input text`, but on the emulator this silently breaks text entry — the field
+# never receives the characters, Sign-In appears to succeed, and the run
+# continues against the login screen. Worse, the setting takes effect on the
+# next IME session rather than immediately, so the breakage is intermittent.
 function Suppress-SoftIme {
     A shell settings put secure show_ime_with_hard_keyboard 0 | Out-Null
+    $global:IME_SUPPRESSED = $true
 }
 
 # BACK closes the IME *when one is genuinely showing*, and only then falls
@@ -162,15 +185,32 @@ function Suppress-SoftIme {
 # which every remaining Shot silently captures the home screen instead of the
 # app. Suppress-SoftIme prevents it; this guard catches it if it happens
 # anyway, because a wrong capture is far more expensive than a slow one.
-function Hide-Keyboard {
-    $shown = (A shell dumpsys input_method 2>&1 | Select-String "mInputShown=true") -join ""
-    if (-not $shown) { return }
+# Is the IME actually on screen? mImeWindowVis is the reliable signal;
+# mInputShown lies. It reports true after the keyboard has already gone, and
+# acting on that stale reading is what sent BACK into the back stack.
+function Get-ImeVisible {
+    $line = (A shell dumpsys input_method 2>&1 | Select-String 'mImeWindowVis=') -join " "
+    if ($line -match 'mImeWindowVis=(\S+)') { return ($Matches[1] -notmatch '^(0x)?0+$') }
+    return $false
+}
 
-    A shell input keyevent 4 | Out-Null
-    Start-Sleep -Milliseconds 900
+function Hide-Keyboard {
+    if ($global:IME_SUPPRESSED) { return }
+    if (-not (Get-ImeVisible)) { return }
+
+    # ENTER fires the field's IME action, which closes the keyboard and leaves
+    # the back stack alone.
+    #
+    # BACK is NOT usable here. On API 37 one BACK closes the IME *and* pops the
+    # activity, so the app lands on the launcher mid-run and every later Shot
+    # captures the home screen — that is what ruined the Manager set twice.
+    # ESCAPE is safe but does nothing (the IME stays up), so it is not an
+    # alternative either.
+    A shell input keyevent 66 | Out-Null
+    Start-Sleep -Milliseconds 800
 
     if ((Current-Focus) -notmatch 'com\.mcc\.construction') {
-        Write-Host "  !! BACK left the app (no real IME was showing) — relaunching"
+        Write-Host "  !! dismissing the IME left the app — relaunching, expect the rest of this script to fail"
         A shell am start -n com.mcc.construction/.MainActivity | Out-Null
         Start-Sleep -Seconds 4
     }
@@ -238,14 +278,33 @@ function Expect($Text) {
 function Sign-In($Role, $User) {
     Tap-Text "s.dlamini" 0 1500 | Out-Null     # the placeholder, not the "Username" label
     Type-Text $User
-    # Dismiss the IME before reaching for the next field. On a short window the
-    # keyboard covers the password field, so the tap lands on the keyboard,
-    # focus never moves, and the password is appended to the username.
-    Hide-Keyboard
-    Tap-Text "Enter your password" 0 1500 | Out-Null
+
+    # Reach the password field with TAB instead of tapping it. On a short
+    # window the IME covers that field, so the tap lands on the keyboard, focus
+    # never moves, and the password is appended to the username — the field
+    # ends up holding "s.dlaminisitepass1", Sign In does nothing, and the run
+    # carries on screenshotting the login screen. Tapping reported success the
+    # whole time, which is why this needs to not depend on a tap at all.
+    A shell input keyevent 61 | Out-Null
+    Start-Sleep -Milliseconds 700
     Type-Text "sitepass1"
+
     Hide-Keyboard
-    Tap-Text $Role 0 1000 | Out-Null
+    # Role cards show label + blurb at full size, but a short window uses the
+    # compact layout, which drops the blurb and leaves only the label. Callers
+    # pass the blurb because it is unambiguous; fall back to the label so the
+    # same call works at desktop width, where matching the blurb finds nothing
+    # and the run silently proceeds as the wrong role.
+    if (-not (Tap-Text $Role 0 1000)) {
+        $label = switch -Wildcard ($Role) {
+            "Today's tasks*"   { "Worker" }
+            "Projects, teams*" { "Manager" }
+            "Users, settings*" { "Administrator" }
+            default            { $Role }
+        }
+        Tap-Text $label 0 1000 -Exact | Out-Null
+    }
+
     if (-not (Tap-Text "Sign In" 0 3000 -Exact)) {
         Scroll-Down 1
         Tap-Text "Sign In" 0 3000 -Exact | Out-Null
@@ -255,4 +314,14 @@ function Sign-In($Role, $User) {
 # Session setup. Runs last because dot-sourcing executes top to bottom, so the
 # functions above have to exist before anything calls them.
 A shell settings put global hide_error_dialogs 1 | Out-Null
-Suppress-SoftIme
+
+if ($env:MCC_SUPPRESS_IME) {
+    Suppress-SoftIme
+    Write-Host "ime    : suppressed (MCC_SUPPRESS_IME)"
+} else {
+    # Leave the soft IME enabled by default: `input text` depends on it unless
+    # the runtime provides a hardware keyboard. Undo a suppression left behind
+    # by an earlier run against the same device, or text entry stays broken in
+    # a way that looks like a missed tap.
+    A shell settings put secure show_ime_with_hard_keyboard 1 | Out-Null
+}

@@ -1,14 +1,11 @@
 # Screenshots
 
-61 screenshots of the running debug build, captured 14 Aug 2026 from commit
-`05a1623` (`:app:assembleDebug`) on the Android Studio emulator, API 37.
+61 screenshots of the running debug build, captured 15 Aug 2026 from commit
+`cfe5ad1` (`:app:assembleDebug`) on the Android Studio emulator, API 37.
 
-Five were re-captured later the same day from commit `ce26a74`, after the real
-client logo and brand colours landed: `phone-01-splash`, `phone-02-login`,
-`phone-03-login-validation-error`, `tablet-01-login` and `desktop-01-login` —
-the only screens that rendered the old placeholder mark. Those five come from
-BlueStacks (API 25) rather than the emulator, matched to the same framebuffer
-and density so the output dimensions are identical; see "Known imperfections".
+The whole set was re-shot in one pass after the real client logo and brand
+colours landed, so every image shows the sampled navy `#173061` and gold
+`#DEAC2D` and there is no mix of runtimes or builds.
 
 Every screen in the app is covered, across all three user roles and all three
 window size classes.
@@ -107,13 +104,9 @@ imperfections" for why.
   reboot and never recovered. Rather than ship a set with disagreeing clocks,
   the status bar is cropped from all 61 images.
 - **The gesture pill is still present** at the bottom of each image.
-- **Five images come from a different runtime.** The re-captured logo screens
-  were taken on BlueStacks (API 25) because the emulator would not boot at the
-  time. Framebuffer and density were set to match the emulator presets exactly,
-  so dimensions are pixel-identical and the set is still uniform per breakpoint,
-  but platform text rendering differs slightly between API 25 and API 37. The
-  remaining 56 images still show the previous navy and gold, since only the
-  logo screens were re-shot.
+- **The status bar now shows a pinned 09:30 clock**, because demo mode held for
+  this run. It is still cropped from every image, so the set matches the earlier
+  ones and does not depend on demo mode having behaved.
 - Tablet and desktop cover a representative subset of screens, not all 37 — they
   exist to evidence the navigation chrome and how content reflows.
 
