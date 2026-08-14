@@ -1,5 +1,6 @@
 package com.mcc.construction.ui.screens.login
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,19 +43,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.mcc.construction.R
 import com.mcc.construction.data.MockRepository
 import com.mcc.construction.data.UserRole
 import com.mcc.construction.navigation.NavMenus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AppTextField
-import com.mcc.construction.ui.components.BrandMark
 import com.mcc.construction.ui.components.PrimaryButton
-import com.mcc.construction.ui.theme.NavyBlue
+import com.mcc.construction.ui.theme.BrandWhite
 import com.mcc.construction.ui.theme.Spacing
 import com.mcc.construction.ui.theme.Tone
 import com.mcc.construction.ui.theme.colors
@@ -98,7 +101,7 @@ fun LoginScreen(navController: NavHostController) {
         // side, which reclaims roughly 250dp and brings the button back into
         // view without changing the layout on a phone.
         val shortWindow = maxHeight < 720.dp
-        val brandSize = if (shortWindow) 48.dp else 72.dp
+        val logoWidth = if (shortWindow) 160.dp else 220.dp
 
         Box(
             modifier = Modifier
@@ -119,16 +122,21 @@ fun LoginScreen(navController: NavHostController) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val mark = @Composable {
+                // The official lockup is fixed navy-and-gold artwork on
+                // transparency, so it always needs a light ground. Against the
+                // white light-theme surface this plate is invisible; in dark mode
+                // it becomes the card that keeps the logo legible.
                 Box(
                     modifier = Modifier
-                        .size(brandSize)
-                        .clip(CircleShape)
-                        .background(NavyBlue),
-                    contentAlignment = Alignment.Center
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(BrandWhite)
+                        .padding(horizontal = Spacing.md, vertical = Spacing.sm)
                 ) {
-                    BrandMark(
-                        modifier = Modifier.size(brandSize * 0.61f),
-                        grooveColor = NavyBlue
+                    Image(
+                        painter = painterResource(R.drawable.mcc_logo_full_lockup),
+                        contentDescription = "MCC Construction",
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.width(logoWidth)
                     )
                 }
             }
@@ -141,7 +149,7 @@ fun LoginScreen(navController: NavHostController) {
             }
             val subtitle = @Composable {
                 Text(
-                    text = "MCC Construction Site Management",
+                    text = "Site Management System",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
