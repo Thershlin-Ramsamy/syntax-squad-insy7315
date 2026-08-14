@@ -7,8 +7,12 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
+import com.mcc.construction.ui.screens.admin.AuditLogScreen
+import com.mcc.construction.ui.screens.admin.UserManagementScreen
 import com.mcc.construction.ui.screens.dashboard.ManagerDashboardScreen
 import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
+import com.mcc.construction.ui.screens.documents.DocumentsScreen
 import com.mcc.construction.ui.screens.employees.EmployeeListScreen
 import com.mcc.construction.ui.screens.employees.EmployeeProfileScreen
 import com.mcc.construction.ui.screens.inventory.InventoryScreen
@@ -17,11 +21,14 @@ import com.mcc.construction.ui.screens.login.ForgotPasswordScreen
 import com.mcc.construction.ui.screens.login.LoginScreen
 import com.mcc.construction.ui.screens.messages.ChatScreen
 import com.mcc.construction.ui.screens.messages.MessagesScreen
-import com.mcc.construction.ui.screens.placeholder.ComingSoonScreen
+import com.mcc.construction.ui.screens.notifications.NotificationsScreen
+import com.mcc.construction.ui.screens.profile.ProfileScreen
 import com.mcc.construction.ui.screens.projects.ProjectDetailScreen
 import com.mcc.construction.ui.screens.projects.ProjectListScreen
 import com.mcc.construction.ui.screens.reports.ReportsScreen
+import com.mcc.construction.ui.screens.settings.SettingsScreen
 import com.mcc.construction.ui.screens.splash.SplashScreen
+import com.mcc.construction.ui.screens.sync.SyncStatusScreen
 import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
 import com.mcc.construction.ui.screens.tasks.TaskListScreen
 import com.mcc.construction.ui.screens.worker.AttendanceScreen
@@ -42,11 +49,11 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(Routes.FORGOT_PASSWORD) { ForgotPasswordScreen(navController) }
 
         // --- Shared --------------------------------------------------------
-        composable(Routes.NOTIFICATIONS) { ComingSoonScreen("Notifications") }
-        composable(Routes.PROFILE) { ComingSoonScreen("Profile") }
-        composable(Routes.SETTINGS) { ComingSoonScreen("Settings") }
-        composable(Routes.SYNC_STATUS) { ComingSoonScreen("Sync Status") }
-        composable(Routes.DOCUMENTS) { ComingSoonScreen("Documents") }
+        composable(Routes.NOTIFICATIONS) { NotificationsScreen(navController) }
+        composable(Routes.PROFILE) { ProfileScreen(navController) }
+        composable(Routes.SETTINGS) { SettingsScreen(navController) }
+        composable(Routes.SYNC_STATUS) { SyncStatusScreen(navController) }
+        composable(Routes.DOCUMENTS) { DocumentsScreen(navController) }
 
         // --- Worker --------------------------------------------------------
         composable(Routes.WORKER_DASHBOARD) { WorkerDashboardScreen(navController) }
@@ -65,9 +72,9 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(Routes.REPORTS) { ReportsScreen(navController) }
 
         // --- Administrator -------------------------------------------------
-        composable(Routes.ADMIN_DASHBOARD) { ComingSoonScreen("Admin Dashboard") }
-        composable(Routes.USER_MANAGEMENT) { ComingSoonScreen("User Management") }
-        composable(Routes.AUDIT_LOG) { ComingSoonScreen("Audit Log") }
+        composable(Routes.ADMIN_DASHBOARD) { AdminDashboardScreen(navController) }
+        composable(Routes.USER_MANAGEMENT) { UserManagementScreen() }
+        composable(Routes.AUDIT_LOG) { AuditLogScreen() }
 
         // --- Detail routes -------------------------------------------------
         composable(
