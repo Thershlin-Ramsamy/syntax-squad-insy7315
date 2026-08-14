@@ -1,83 +1,136 @@
 # Screenshots
 
-Captured from the running debug build (`:app:assembleDebug`) on 14 Aug 2026,
-at commit `05a1623`.
+61 screenshots of the running debug build, captured 14 Aug 2026 from commit
+`05a1623` (`:app:assembleDebug`) on the Android Studio emulator, API 37.
 
-Filenames are prefixed with the window size class the app resolved to, because
-the same build produces all three layouts — that is the point of the adaptive
-navigation, and the prefix is what makes the difference visible at a glance.
+Every screen in the app is covered, across all three user roles and all three
+window size classes.
 
 ## Breakpoints
 
-| Prefix | Width | Navigation chrome | Captured on |
-|---|---|---|---|
-| `compact-` | 360 dp | Bottom navigation bar, 5 destinations | BlueStacks, 540×960 @ 240 dpi |
-| `medium-` | 720 dp | NavigationRail, 10 destinations | BlueStacks, 1080×1080 override @ 240 dpi |
-| `expanded-` | 864 dp | Permanent drawer, labelled rows | Android Studio emulator, 1080×2400 @ 200 dpi |
+The same build produces all three layouts — that is the point of the adaptive
+navigation, so the prefix names the size class rather than the device.
 
-`expanded-01-splash.png` is the exception: it was taken at 2560×1600 @ 240 dpi
-(1707 dp) before that geometry was abandoned — see "Reproducing" below.
+| Prefix | Resolution | Density | Width | Navigation chrome |
+|---|---|---|---|---|
+| `phone-` | 1080×2337 | 420 dpi | 411 dp — compact | Bottom bar, 5 destinations |
+| `tablet-` | 1536×2000 | 320 dpi | 768 dp — medium | NavigationRail, 10 destinations |
+| `desktop-` | 1920×1152 | 320 dpi | 960 dp — expanded | Permanent drawer, labelled rows |
 
-## Index
+Images are uniform within each breakpoint. The status bar is cropped from every
+image (63 px phone, 48 px tablet and desktop, measured from
+`dumpsys window displays`) so the set is visually consistent — see "Known
+imperfections" for why.
 
-### Compact — 360 dp
+## Phone — 411 dp, all screens
 
-| File | Shows |
+### Entry
+| File | Screen |
 |---|---|
-| `compact-01-login.png` | Login, top of form — brand mark, role selector, Worker preselected |
-| `compact-02-login-full-form.png` | Login scrolled to reveal Sign In and Forgot password |
-| `compact-03-login-validation-error.png` | Validation on empty submit. "s.dlamini" is placeholder text, not a value |
-| `compact-04-login-username-entered.png` | Username filled, focus ring on the field |
-| `compact-05-worker-dashboard.png` | Worker dashboard — bottom bar, sync chip, metric tiles, Clock In, safety banner |
-| `compact-06-task-list.png` | Task list — segmented status filter, status pills, high-priority flags |
-| `compact-07-task-detail.png` | Task detail — nav arg resolved, back arrow, sticky action, **no bottom bar** (pushed screen) |
-| `compact-08-app-icon-on-launcher.png` | Adaptive launcher icon on the BlueStacks home screen |
+| `phone-01-splash` | Splash |
+| `phone-02-login` | Login |
+| `phone-03-login-validation-error` | Login, validation on empty submit |
+| `phone-04-forgot-password` | Forgot Password |
 
-### Medium — 720 dp
-
-| File | Shows |
+### Worker
+| File | Screen |
 |---|---|
-| `medium-01-login.png` | Login — form fits without scrolling, content capped rather than stretched |
-| `medium-02-login-manager-selected.png` | Login with Manager role selected |
-| `medium-03-manager-dashboard-navigation-rail.png` | Manager dashboard — **NavigationRail** replaces the bottom bar, fuller 10-item menu |
+| `phone-05-worker-dashboard` | Worker Dashboard |
+| `phone-06-worker-dashboard-quick-actions` | Worker Dashboard, scrolled to quick actions |
+| `phone-07-task-list` | Task List |
+| `phone-08-task-detail` | Task Detail |
+| `phone-09-attendance` | Attendance, not clocked in |
+| `phone-10-attendance-clocked-in` | Attendance, after clocking in |
+| `phone-11-messages` | Messages |
+| `phone-12-chat` | Chat |
+| `phone-13-profile` | Profile |
+| `phone-14-profile-more` | Profile, secondary destinations |
+| `phone-15-documents` | Documents |
+| `phone-16-sync-status` | Offline & Sync Status |
+| `phone-17-safety-checklist` | Safety Checklist |
+| `phone-18-daily-report` | Daily Report |
+| `phone-19-settings` | Settings |
 
-### Expanded — 864 dp
-
-| File | Shows |
+### Manager
+| File | Screen |
 |---|---|
-| `expanded-01-splash.png` | Splash — centred, not stretched, at 1707 dp |
-| `expanded-02-login.png` | Login — content centred at max width |
-| `expanded-03-login-manager-selected.png` | Login filled, Manager selected, tablet split keyboard |
-| `expanded-04-manager-dashboard-permanent-drawer.png` | Manager dashboard — **permanent drawer** with header and labelled rows |
-| `expanded-05-notifications-single-top-bar.png` | Notifications inside the drawer shell with a **single** top bar |
+| `phone-20-manager-dashboard` | Manager Dashboard |
+| `phone-21-manager-dashboard-projects` | Manager Dashboard, projects section |
+| `phone-22-projects-list` | Projects List |
+| `phone-23-project-detail` | Project Detail |
+| `phone-24-project-detail-tasks` | Project Detail, tasks section |
+| `phone-25-employees` | Employees |
+| `phone-26-employee-profile` | Employee Profile |
+| `phone-27-manager-task-list` | Task List, manager role |
+| `phone-28-inventory` | Inventory |
+| `phone-29-material-detail` | Material Detail |
+| `phone-30-reports` | Reports History |
+| `phone-31-reports-incidents` | Reports, incidents section |
 
-## What these do *not* cover
+### Administrator
+| File | Screen |
+|---|---|
+| `phone-32-admin-dashboard` | Admin Dashboard |
+| `phone-33-admin-dashboard-activity` | Admin Dashboard, recent activity |
+| `phone-34-user-management` | User Management |
+| `phone-35-user-management-roles` | User Management, role controls |
+| `phone-36-audit-log` | Audit Log |
+| `phone-37-notifications` | Notifications |
 
-Roughly 20 of the 28 screens were never rendered. Not captured:
+## Tablet — 768 dp, navigation rail
 
-- **Worker** — Attendance, Daily Report, Safety Checklist, Incident Report, Messages, Chat
-- **Manager** — Projects List, Project Detail, Employees, Employee Profile, Inventory, Material Detail, Reports
-- **Shared** — Profile, Settings, Documents, Sync Status, Forgot Password
-- **Administrator** — Admin Dashboard, User Management, Audit Log (the entire role is unverified)
+`tablet-01-login`, `tablet-02-worker-dashboard`, `tablet-03-task-list`,
+`tablet-04-task-detail`, `tablet-05-attendance`, `tablet-06-manager-dashboard`,
+`tablet-07-projects-list`, `tablet-08-project-detail`, `tablet-09-employees`,
+`tablet-10-inventory`, `tablet-11-reports`, `tablet-12-notifications`
 
-No interaction was exercised either: clock in/out, ticking the safety checklist,
-marking a task complete, sending a chat message, changing a user's role or
-suspending them, "Sync now", and sign-out are all untested.
+## Desktop — 960 dp, permanent drawer
 
-No crashes appeared in logcat across everything that *was* run.
+`desktop-01-login`, `desktop-02-worker-dashboard`, `desktop-03-task-list`,
+`desktop-04-task-detail`, `desktop-05-attendance`,
+`desktop-06-manager-dashboard`, `desktop-07-projects-list`,
+`desktop-08-project-detail`, `desktop-09-employees`, `desktop-10-inventory`,
+`desktop-11-reports`, `desktop-12-notifications`
+
+## Known imperfections
+
+- **The status bar is cropped, not styled.** SystemUI demo mode (which pins the
+  clock to 09:30 with full battery and signal) stopped being honoured partway
+  through capture — the broadcast started returning `result=0` after an emulator
+  reboot and never recovered. Rather than ship a set with disagreeing clocks,
+  the status bar is cropped from all 61 images.
+- **The gesture pill is still present** at the bottom of each image.
+- Tablet and desktop cover a representative subset of screens, not all 37 — they
+  exist to evidence the navigation chrome and how content reflows.
+
+## Observations worth acting on
+
+- **On a short landscape window the login CTA falls below the fold.** At
+  960×600 dp the Sign In button is off-screen and requires scrolling; the form
+  is scrollable so it is reachable, but the primary action should not need a
+  scroll to find. Visible in `desktop-01-login`.
 
 ## Reproducing
 
-BlueStacks exposes adb on `127.0.0.1:5555`. The Android Studio emulator needs
-`wm density` rather than `wm size` to reach the expanded breakpoint: at the
-native 1080 px width, density 200 gives 1080 ÷ 200 × 160 = **864 dp**, just over
-the 840 dp threshold, with no scaling cost. Forcing `wm size 2560x1600` also
-reaches expanded but makes SystemUI ANR repeatedly on a software-rendered
-emulator, which blanks the screen.
+Capture is scripted and drives the app by reading the accessibility tree
+(`uiautomator dump`) rather than hard-coded coordinates, so the same script runs
+unchanged at every window size. Notes for anyone repeating it:
 
-Two further gotchas: `screencap` cannot write to `/sdcard` on Android 17 — use
-`/data/local/tmp` — and launching via `monkey` can trip a recents gesture that
-sends the app straight to the background, so prefer `am start`.
-
-The built APK lands in `app/build/intermediates/apk/debug/`, not
-`app/build/outputs/`.
+- Set the size class with `wm size` + `wm density`. Density is the useful lever:
+  at a fixed 1080 px width, density 200 yields 864 dp (expanded) with no
+  scaling cost, where forcing a large `wm size` makes SystemUI ANR on a
+  software-rendered emulator.
+- Reboot the emulator after each geometry change and wait for
+  `sys.boot_completed=1` plus a further ~20 s; the first launch after a reboot
+  is otherwise too cold and the app never reaches the foreground.
+- A failed `uiautomator dump` leaves the *previous* screen's XML on the device.
+  Delete `/data/local/tmp/ui.xml` before each dump or you will silently query
+  the wrong screen.
+- Dismiss the IME between form fields. On a short window the keyboard covers the
+  next field, so the tap lands on the keyboard, focus never moves, and the text
+  is appended to the previous field.
+- `screencap` cannot write to `/sdcard` on Android 17 — use `/data/local/tmp`.
+- Launch with `am start`, not `monkey`; `monkey` can trip a recents gesture that
+  sends the app straight to the background.
+- The built APK is at `app/build/intermediates/apk/debug/`, not
+  `app/build/outputs/`.
