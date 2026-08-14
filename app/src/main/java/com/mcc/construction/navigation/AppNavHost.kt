@@ -7,10 +7,19 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
 import com.mcc.construction.ui.screens.login.ForgotPasswordScreen
 import com.mcc.construction.ui.screens.login.LoginScreen
+import com.mcc.construction.ui.screens.messages.ChatScreen
+import com.mcc.construction.ui.screens.messages.MessagesScreen
 import com.mcc.construction.ui.screens.placeholder.ComingSoonScreen
 import com.mcc.construction.ui.screens.splash.SplashScreen
+import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
+import com.mcc.construction.ui.screens.tasks.TaskListScreen
+import com.mcc.construction.ui.screens.worker.AttendanceScreen
+import com.mcc.construction.ui.screens.worker.DailyReportScreen
+import com.mcc.construction.ui.screens.worker.IncidentReportScreen
+import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -32,13 +41,13 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(Routes.DOCUMENTS) { ComingSoonScreen("Documents") }
 
         // --- Worker --------------------------------------------------------
-        composable(Routes.WORKER_DASHBOARD) { ComingSoonScreen("Worker Dashboard") }
-        composable(Routes.TASKS) { ComingSoonScreen("Tasks") }
-        composable(Routes.ATTENDANCE) { ComingSoonScreen("Attendance") }
-        composable(Routes.DAILY_REPORT) { ComingSoonScreen("Daily Report") }
-        composable(Routes.SAFETY_CHECKLIST) { ComingSoonScreen("Safety Checklist") }
-        composable(Routes.INCIDENT_REPORT) { ComingSoonScreen("Incident Report") }
-        composable(Routes.MESSAGES) { ComingSoonScreen("Messages") }
+        composable(Routes.WORKER_DASHBOARD) { WorkerDashboardScreen(navController) }
+        composable(Routes.TASKS) { TaskListScreen(navController) }
+        composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
+        composable(Routes.DAILY_REPORT) { DailyReportScreen(navController) }
+        composable(Routes.SAFETY_CHECKLIST) { SafetyChecklistScreen(navController) }
+        composable(Routes.INCIDENT_REPORT) { IncidentReportScreen(navController) }
+        composable(Routes.MESSAGES) { MessagesScreen(navController) }
 
         // --- Manager -------------------------------------------------------
         composable(Routes.MANAGER_DASHBOARD) { ComingSoonScreen("Manager Dashboard") }
@@ -56,7 +65,12 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(
             route = Routes.TASK_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.StringType })
-        ) { ComingSoonScreen("Task Details") }
+        ) { entry ->
+            TaskDetailScreen(
+                navController = navController,
+                taskId = entry.arguments?.getString(Routes.ARG_TASK_ID).orEmpty()
+            )
+        }
 
         composable(
             route = Routes.PROJECT_DETAIL_PATTERN,
@@ -76,6 +90,11 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(
             route = Routes.CHAT_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_CONVERSATION_ID) { type = NavType.StringType })
-        ) { ComingSoonScreen("Chat") }
+        ) { entry ->
+            ChatScreen(
+                navController = navController,
+                conversationId = entry.arguments?.getString(Routes.ARG_CONVERSATION_ID).orEmpty()
+            )
+        }
     }
 }
