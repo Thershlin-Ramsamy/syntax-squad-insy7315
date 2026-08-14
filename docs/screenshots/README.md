@@ -103,12 +103,15 @@ imperfections" for why.
 - Tablet and desktop cover a representative subset of screens, not all 37 — they
   exist to evidence the navigation chrome and how content reflows.
 
-## Observations worth acting on
+## Findings from this capture
 
-- **On a short landscape window the login CTA falls below the fold.** At
-  960×600 dp the Sign In button is off-screen and requires scrolling; the form
-  is scrollable so it is reachable, but the primary action should not need a
-  scroll to find. Visible in `desktop-01-login`.
+- **Fixed: the login CTA fell below the fold on a short landscape window.** At
+  960×600 dp the Sign In button was off-screen and needed a scroll to reach.
+  The login screen now measures its own height and, below 720 dp, lays the
+  brand block out horizontally and puts the three role options in a single row
+  — about 250 dp reclaimed, enough to bring the button back into view. The
+  phone layout is unchanged. Compare `desktop-01-login` (after the fix) with
+  the taller stacked form still used on `phone-02-login`.
 
 ## Reproducing
 
@@ -132,5 +135,6 @@ unchanged at every window size. Notes for anyone repeating it:
 - `screencap` cannot write to `/sdcard` on Android 17 — use `/data/local/tmp`.
 - Launch with `am start`, not `monkey`; `monkey` can trip a recents gesture that
   sends the app straight to the background.
-- The built APK is at `app/build/intermediates/apk/debug/`, not
-  `app/build/outputs/`.
+- Install from `app/build/outputs/apk/debug/app-debug.apk`. A stale copy also
+  sits under `app/build/intermediates/apk/debug/` and is easy to install by
+  mistake, which silently tests the previous build.
