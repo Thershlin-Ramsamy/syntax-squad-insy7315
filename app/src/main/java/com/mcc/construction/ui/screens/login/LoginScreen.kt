@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -85,47 +86,85 @@ fun LoginScreen(navController: NavHostController) {
         }
     }
 
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.surface)
-            .verticalScroll(rememberScrollState()),
-        contentAlignment = Alignment.Center
     ) {
+        // A landscape desktop window is wide but short. Stacked vertically the
+        // form runs past ~700dp, which pushes Sign In off the bottom — the
+        // primary action should not need a scroll to find. Below that height
+        // the brand block goes horizontal and the role options sit side by
+        // side, which reclaims roughly 250dp and brings the button back into
+        // view without changing the layout on a phone.
+        val shortWindow = maxHeight < 720.dp
+        val brandSize = if (shortWindow) 48.dp else 72.dp
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+            contentAlignment = Alignment.Center
+        ) {
         Column(
             modifier = Modifier
                 // Caps the form on tablets — a sign-in field stretched across
-                // 1200dp is unreadable and looks unfinished.
-                .widthIn(max = 460.dp)
-                .padding(horizontal = Spacing.screenH, vertical = Spacing.xxxl),
+                // 1200dp is unreadable and looks unfinished. Widened when the
+                // role options are laid out in a row so three fit comfortably.
+                .widthIn(max = if (shortWindow) 620.dp else 460.dp)
+                .padding(
+                    horizontal = Spacing.screenH,
+                    vertical = if (shortWindow) Spacing.xl else Spacing.xxxl
+                ),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(CircleShape)
-                    .background(NavyBlue),
-                contentAlignment = Alignment.Center
-            ) {
-                BrandMark(
-                    modifier = Modifier.size(44.dp),
-                    grooveColor = NavyBlue
+            val mark = @Composable {
+                Box(
+                    modifier = Modifier
+                        .size(brandSize)
+                        .clip(CircleShape)
+                        .background(NavyBlue),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BrandMark(
+                        modifier = Modifier.size(brandSize * 0.61f),
+                        grooveColor = NavyBlue
+                    )
+                }
+            }
+            val title = @Composable {
+                Text(
+                    text = "Sign in",
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
-            Spacer(Modifier.height(Spacing.lg))
-            Text(
-                text = "Sign in",
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            Spacer(Modifier.height(Spacing.xs))
-            Text(
-                text = "MCC Construction Site Management",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            val subtitle = @Composable {
+                Text(
+                    text = "MCC Construction Site Management",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
-            Spacer(Modifier.height(Spacing.xxxl))
+            if (shortWindow) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    mark()
+                    Spacer(Modifier.width(Spacing.lg))
+                    Column {
+                        title()
+                        subtitle()
+                    }
+                }
+                Spacer(Modifier.height(Spacing.xl))
+            } else {
+                mark()
+                Spacer(Modifier.height(Spacing.lg))
+                title()
+                Spacer(Modifier.height(Spacing.xs))
+                subtitle()
+                Spacer(Modifier.height(Spacing.xxxl))
+            }
 
             AppTextField(
                 value = username,
@@ -167,23 +206,34 @@ fun LoginScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(Spacing.sm))
-            UserRole.entries.forEach { role ->
-                RoleOption(
-                    role = role,
-                    icon = when (role) {
-                        UserRole.WORKER -> Icons.Filled.Engineering
-                        UserRole.MANAGER -> Icons.Filled.SupervisorAccount
-                        UserRole.ADMINISTRATOR -> Icons.Filled.AdminPanelSettings
-                    },
-                    selected = selectedRole == role,
-                    onClick = { selectedRole = role }
-                )
-                Spacer(Modifier.height(Spacing.sm))
+            if (shortWindow) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                    UserRole.entries.forEach { role ->
+                        RoleOption(
+                            role = role,
+                            icon = role.icon,
+                            selected = selectedRole == role,
+                            onClick = { selectedRole = role },
+                            compact = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+            } else {
+                UserRole.entries.forEach { role ->
+                    RoleOption(
+                        role = role,
+                        icon = role.icon,
+                        selected = selectedRole == role,
+                        onClick = { selectedRole = role }
+                    )
+                    Spacer(Modifier.height(Spacing.sm))
+                }
             }
 
             Spacer(Modifier.height(Spacing.lg))
             PrimaryButton(text = "Sign In", onClick = { submit() })
-            Spacer(Modifier.height(Spacing.lg))
+            Spacer(Modifier.height(if (shortWindow) Spacing.sm else Spacing.lg))
             Text(
                 text = "Forgot password?",
                 style = MaterialTheme.typography.labelMedium,
@@ -194,34 +244,80 @@ fun LoginScreen(navController: NavHostController) {
                     .padding(Spacing.sm)
             )
         }
+        }
     }
 }
 
+private val UserRole.icon: ImageVector
+    get() = when (this) {
+        UserRole.WORKER -> Icons.Filled.Engineering
+        UserRole.MANAGER -> Icons.Filled.SupervisorAccount
+        UserRole.ADMINISTRATOR -> Icons.Filled.AdminPanelSettings
+    }
+
+/**
+ * One selectable role.
+ *
+ * [compact] drops the blurb and centres icon over label so three options fit
+ * across a single row — used on short windows where the stacked cards would
+ * push the sign-in button below the fold.
+ */
 @Composable
 private fun RoleOption(
     role: UserRole,
     icon: ImageVector,
     selected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    compact: Boolean = false
 ) {
     val tone = if (selected) Tone.Info else Tone.Neutral
     val c = tone.colors()
+
+    val surface = Modifier
+        .height(64.dp)
+        .clip(MaterialTheme.shapes.medium)
+        .background(
+            if (selected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.surface
+        )
+        .border(
+            width = if (selected) 0.dp else 1.dp,
+            color = if (selected) MaterialTheme.colorScheme.primaryContainer
+            else MaterialTheme.colorScheme.outlineVariant,
+            shape = MaterialTheme.shapes.medium
+        )
+        .clickable(onClick = onClick)
+
+    if (compact) {
+        Column(
+            modifier = modifier
+                .then(surface)
+                .padding(horizontal = Spacing.sm),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = c.ink,
+                modifier = Modifier.size(20.dp)
+            )
+            Spacer(Modifier.height(Spacing.xs))
+            Text(
+                text = role.label,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1
+            )
+        }
+        return
+    }
+
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .background(
-                if (selected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.surface
-            )
-            .border(
-                width = if (selected) 0.dp else 1.dp,
-                color = if (selected) MaterialTheme.colorScheme.primaryContainer
-                else MaterialTheme.colorScheme.outlineVariant,
-                shape = MaterialTheme.shapes.medium
-            )
-            .clickable(onClick = onClick)
+            .then(surface)
             .padding(horizontal = Spacing.lg),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start
