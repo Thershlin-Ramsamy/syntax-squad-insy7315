@@ -23,17 +23,38 @@ if (-not (Test-Path $global:ADB)) {
     throw "adb not found at '$($global:ADB)'. Set `$env:MCC_ADB to its full path."
 }
 
-# Pick a device: the override, else the only attached one.
-if ($env:MCC_DEVICE) {
+function Get-OnlineDevices {
+    @(& $global:ADB devices |
+        Select-String '^\S+\s+device$' |
+        ForEach-Object { ($_ -split '\s+')[0] })
+}
+
+# BlueStacks listens on a loopback port that it REASSIGNS between restarts —
+# 5555 one run, 5556 the next — so it silently disappears from `adb devices`
+# after every geometry change. Probing the usual ports re-attaches it before we
+# go looking. Harmless when only an emulator is attached.
+foreach ($p in 5555, 5556, 5557) {
+    & $global:ADB connect "127.0.0.1:$p" 2>&1 | Out-Null
+}
+
+# Pick a device: the override if it is actually online, else the only one
+# attached. A pinned $env:MCC_DEVICE that has gone stale is a warning rather
+# than a hard failure, because the reassignment above is routine.
+# @() is load-bearing: a one-element array unrolls to a bare string on
+# assignment, and then $online[0] indexes the *string* and yields "1" from
+# "127.0.0.1:5556" — which fails later as a device id that does not exist.
+$online = @(Get-OnlineDevices)
+
+if ($env:MCC_DEVICE -and $online -contains $env:MCC_DEVICE) {
     $global:DEV = $env:MCC_DEVICE
 } else {
-    $attached = & $global:ADB devices |
-        Select-String '^\S+\s+device$' |
-        ForEach-Object { ($_ -split '\s+')[0] }
-    if (@($attached).Count -ne 1) {
-        throw "Expected exactly one attached device, found $(@($attached).Count). Set `$env:MCC_DEVICE."
+    if ($env:MCC_DEVICE) {
+        Write-Host "  warn: MCC_DEVICE '$($env:MCC_DEVICE)' is not online — rediscovering"
     }
-    $global:DEV = @($attached)[0]
+    if ($online.Count -ne 1) {
+        throw "Expected exactly one online device, found $($online.Count) ($($online -join ', ')). Set `$env:MCC_DEVICE."
+    }
+    $global:DEV = $online[0]
 }
 
 Write-Host "adb    : $($global:ADB)"
@@ -125,11 +146,34 @@ function Tap-XY([int]$X, [int]$Y, [int]$SettleMs = 1500) {
 
 function Type-Text($Text) { A shell input text $Text | Out-Null; Start-Sleep -Milliseconds 400 }
 
-# BACK closes the IME before it touches the back stack, so this is safe to
-# call unconditionally.
+# Stops the soft IME appearing at all, so nothing ever covers a field and
+# Hide-Keyboard has no work to do. Runtimes that present a hardware keyboard
+# (BlueStacks) still accept `input text` with this set. Called once at startup.
+function Suppress-SoftIme {
+    A shell settings put secure show_ime_with_hard_keyboard 0 | Out-Null
+}
+
+# BACK closes the IME *when one is genuinely showing*, and only then falls
+# through to the back stack.
+#
+# That assumption does not hold everywhere. BlueStacks reports
+# mInputShown=true with no IME actually on screen, so the keyevent goes
+# straight to the back stack and pops the app out to the launcher — after
+# which every remaining Shot silently captures the home screen instead of the
+# app. Suppress-SoftIme prevents it; this guard catches it if it happens
+# anyway, because a wrong capture is far more expensive than a slow one.
 function Hide-Keyboard {
     $shown = (A shell dumpsys input_method 2>&1 | Select-String "mInputShown=true") -join ""
-    if ($shown) { A shell input keyevent 4 | Out-Null; Start-Sleep -Milliseconds 900 }
+    if (-not $shown) { return }
+
+    A shell input keyevent 4 | Out-Null
+    Start-Sleep -Milliseconds 900
+
+    if ((Current-Focus) -notmatch 'com\.mcc\.construction') {
+        Write-Host "  !! BACK left the app (no real IME was showing) — relaunching"
+        A shell am start -n com.mcc.construction/.MainActivity | Out-Null
+        Start-Sleep -Seconds 4
+    }
 }
 
 function Get-ScreenSize {
@@ -207,3 +251,8 @@ function Sign-In($Role, $User) {
         Tap-Text "Sign In" 0 3000 -Exact | Out-Null
     }
 }
+
+# Session setup. Runs last because dot-sourcing executes top to bottom, so the
+# functions above have to exist before anything calls them.
+A shell settings put global hide_error_dialogs 1 | Out-Null
+Suppress-SoftIme

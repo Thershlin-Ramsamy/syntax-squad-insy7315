@@ -6,11 +6,16 @@ window size classes, and build the public gallery site from the results.
 They exist because the capture set has to be redone whenever the UI changes,
 and doing it by hand is both slow and inconsistent.
 
+Written against the Android Studio emulator. BlueStacks works too but needs a
+different route to set the size class — see "Running on BlueStacks".
+
 ## Requirements
 
 - Windows PowerShell 7 (`pwsh`)
 - `adb` on `PATH`, or set `$env:MCC_ADB` to its full path
-- Exactly one attached device, or set `$env:MCC_DEVICE` (e.g. `emulator-5556`)
+- Exactly one *online* device, or set `$env:MCC_DEVICE` (e.g. `emulator-5556`).
+  Offline entries are ignored, and a stale `$env:MCC_DEVICE` downgrades to a
+  warning and rediscovery rather than failing the run.
 - The debug APK installed:
   `adb install -r app/build/outputs/apk/debug/app-debug.apk`
 
@@ -45,6 +50,42 @@ cd tools/screenshots
 Then push `build/site` to the public gallery repo — GitHub Pages serves it at
 <https://thershlin-ramsamy.github.io/mcc-construction-screens/>.
 
+## Running on BlueStacks
+
+`set-geometry.ps1` does not work here and will stop with an explanation rather
+than let you find out from the images. BlueStacks accepts `wm size` but
+**silently ignores `wm density`**, so the phone preset lands at 720 dp instead
+of 411 dp — the expanded size class. The run completes, every screenshot looks
+plausible, and the entire phone set is quietly a tablet set with a navigation
+rail where the bottom bar should be.
+
+Set the geometry in its config instead. Close HD-Player first, or it rewrites
+the file on exit, then edit `%ProgramData%\BlueStacks_nxt\bluestacks.conf`:
+
+| Preset | `dpi` | `fb_width` | `fb_height` |
+|---|---|---|---|
+| phone | 420 | 1080 | 2400 |
+| tablet | 320 | 1536 | 2048 |
+| desktop | 320 | 1920 | 1200 |
+
+```
+bst.instance.<instance>.dpi="420"
+bst.instance.<instance>.fb_width="1080"
+bst.instance.<instance>.fb_height="2400"
+```
+
+Restart the instance and clear any leftover override with `adb shell wm size
+reset`. These are the same pixel sizes and densities as the emulator presets,
+so cropped output stays dimension-identical and the set remains uniform.
+
+Two further differences:
+
+- **The adb port moves between restarts** (5555 one run, 5556 the next), so a
+  pinned `$env:MCC_DEVICE` goes stale after every geometry change. `drive.ps1`
+  re-probes 5555-5557 on load, so usually just unset it.
+- **BlueStacks is API 25**, against the emulator's 37. Platform text rendering
+  differs slightly, so avoid mixing runtimes within one breakpoint if you can.
+
 ## Size classes
 
 | Preset | Resolution | Density | Width | Navigation chrome |
@@ -78,6 +119,20 @@ but they will bite anyone extending them.
 - **Text matching must be case-sensitive.** The login screen has a "Sign in"
   heading and a "Sign In" button; a case-insensitive contains-match hits the
   heading and taps nothing.
+- **BACK does not reliably close the IME.** It only falls through to the back
+  stack when no keyboard is showing — but BlueStacks reports `mInputShown=true`
+  with nothing on screen, so `Hide-Keyboard` popped the app out to the launcher
+  and every later `Shot` captured the home screen. `drive.ps1` now calls
+  `Suppress-SoftIme` at load (`show_ime_with_hard_keyboard 0`, which still
+  allows `input text`) and verifies the app kept focus after any BACK. ESCAPE
+  (keyevent 111) has exactly the same problem and is not a workaround.
+- **A white screen can mean "captured nothing".** The splash is white on white,
+  so a cold-start frame taken before the composable renders is indistinguishable
+  from a real capture. Warm the app once before the run that shoots the splash,
+  and eyeball `*-01-splash` afterwards.
+- **A killed emulator does not release its port.** The next one comes up as
+  `emulator-5556`, so anything polling `emulator-5554` waits forever on a dead
+  entry. `adb kill-server` clears the stale rows.
 - **Dismiss the keyboard between form fields.** On a short window the IME
   covers the next field, so the tap lands on the keyboard, focus never moves,
   and the text is appended to the previous field — a silent failure that still
