@@ -7,12 +7,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
+import com.mcc.construction.ui.screens.login.ForgotPasswordScreen
 import com.mcc.construction.ui.screens.login.LoginScreen
 import com.mcc.construction.ui.screens.placeholder.ComingSoonScreen
 import com.mcc.construction.ui.screens.splash.SplashScreen
-import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
-import com.mcc.construction.ui.screens.tasks.TaskListScreen
 
 @Composable
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
@@ -21,19 +19,63 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         startDestination = Routes.SPLASH,
         modifier = modifier
     ) {
+        // --- Entry ---------------------------------------------------------
         composable(Routes.SPLASH) { SplashScreen(navController) }
         composable(Routes.LOGIN) { LoginScreen(navController) }
-        composable(Routes.HOME) { WorkerDashboardScreen(navController) }
-        composable(Routes.TASKS) { TaskListScreen(navController) }
-        composable(Routes.PROJECTS) { ComingSoonScreen("Projects") }
-        composable(Routes.MESSAGES) { ComingSoonScreen("Messages") }
+        composable(Routes.FORGOT_PASSWORD) { ForgotPasswordScreen(navController) }
+
+        // --- Shared --------------------------------------------------------
+        composable(Routes.NOTIFICATIONS) { ComingSoonScreen("Notifications") }
         composable(Routes.PROFILE) { ComingSoonScreen("Profile") }
+        composable(Routes.SETTINGS) { ComingSoonScreen("Settings") }
+        composable(Routes.SYNC_STATUS) { ComingSoonScreen("Sync Status") }
+        composable(Routes.DOCUMENTS) { ComingSoonScreen("Documents") }
+
+        // --- Worker --------------------------------------------------------
+        composable(Routes.WORKER_DASHBOARD) { ComingSoonScreen("Worker Dashboard") }
+        composable(Routes.TASKS) { ComingSoonScreen("Tasks") }
+        composable(Routes.ATTENDANCE) { ComingSoonScreen("Attendance") }
+        composable(Routes.DAILY_REPORT) { ComingSoonScreen("Daily Report") }
+        composable(Routes.SAFETY_CHECKLIST) { ComingSoonScreen("Safety Checklist") }
+        composable(Routes.INCIDENT_REPORT) { ComingSoonScreen("Incident Report") }
+        composable(Routes.MESSAGES) { ComingSoonScreen("Messages") }
+
+        // --- Manager -------------------------------------------------------
+        composable(Routes.MANAGER_DASHBOARD) { ComingSoonScreen("Manager Dashboard") }
+        composable(Routes.PROJECTS) { ComingSoonScreen("Projects") }
+        composable(Routes.EMPLOYEES) { ComingSoonScreen("Employees") }
+        composable(Routes.INVENTORY) { ComingSoonScreen("Inventory") }
+        composable(Routes.REPORTS) { ComingSoonScreen("Reports") }
+
+        // --- Administrator -------------------------------------------------
+        composable(Routes.ADMIN_DASHBOARD) { ComingSoonScreen("Admin Dashboard") }
+        composable(Routes.USER_MANAGEMENT) { ComingSoonScreen("User Management") }
+        composable(Routes.AUDIT_LOG) { ComingSoonScreen("Audit Log") }
+
+        // --- Detail routes -------------------------------------------------
         composable(
             route = Routes.TASK_DETAIL_PATTERN,
-            arguments = listOf(navArgument("taskId") { type = NavType.StringType })
-        ) { backStackEntry ->
-            val taskId = backStackEntry.arguments?.getString("taskId").orEmpty()
-            TaskDetailScreen(navController, taskId)
-        }
+            arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.StringType })
+        ) { ComingSoonScreen("Task Details") }
+
+        composable(
+            route = Routes.PROJECT_DETAIL_PATTERN,
+            arguments = listOf(navArgument(Routes.ARG_PROJECT_ID) { type = NavType.StringType })
+        ) { ComingSoonScreen("Project Details") }
+
+        composable(
+            route = Routes.EMPLOYEE_PROFILE_PATTERN,
+            arguments = listOf(navArgument(Routes.ARG_EMPLOYEE_ID) { type = NavType.StringType })
+        ) { ComingSoonScreen("Employee Profile") }
+
+        composable(
+            route = Routes.MATERIAL_DETAIL_PATTERN,
+            arguments = listOf(navArgument(Routes.ARG_MATERIAL_ID) { type = NavType.StringType })
+        ) { ComingSoonScreen("Material Details") }
+
+        composable(
+            route = Routes.CHAT_PATTERN,
+            arguments = listOf(navArgument(Routes.ARG_CONVERSATION_ID) { type = NavType.StringType })
+        ) { ComingSoonScreen("Chat") }
     }
 }
