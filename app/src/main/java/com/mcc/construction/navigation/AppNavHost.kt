@@ -7,12 +7,20 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.mcc.construction.ui.screens.dashboard.ManagerDashboardScreen
 import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
+import com.mcc.construction.ui.screens.employees.EmployeeListScreen
+import com.mcc.construction.ui.screens.employees.EmployeeProfileScreen
+import com.mcc.construction.ui.screens.inventory.InventoryScreen
+import com.mcc.construction.ui.screens.inventory.MaterialDetailScreen
 import com.mcc.construction.ui.screens.login.ForgotPasswordScreen
 import com.mcc.construction.ui.screens.login.LoginScreen
 import com.mcc.construction.ui.screens.messages.ChatScreen
 import com.mcc.construction.ui.screens.messages.MessagesScreen
 import com.mcc.construction.ui.screens.placeholder.ComingSoonScreen
+import com.mcc.construction.ui.screens.projects.ProjectDetailScreen
+import com.mcc.construction.ui.screens.projects.ProjectListScreen
+import com.mcc.construction.ui.screens.reports.ReportsScreen
 import com.mcc.construction.ui.screens.splash.SplashScreen
 import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
 import com.mcc.construction.ui.screens.tasks.TaskListScreen
@@ -50,11 +58,11 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(Routes.MESSAGES) { MessagesScreen(navController) }
 
         // --- Manager -------------------------------------------------------
-        composable(Routes.MANAGER_DASHBOARD) { ComingSoonScreen("Manager Dashboard") }
-        composable(Routes.PROJECTS) { ComingSoonScreen("Projects") }
-        composable(Routes.EMPLOYEES) { ComingSoonScreen("Employees") }
-        composable(Routes.INVENTORY) { ComingSoonScreen("Inventory") }
-        composable(Routes.REPORTS) { ComingSoonScreen("Reports") }
+        composable(Routes.MANAGER_DASHBOARD) { ManagerDashboardScreen(navController) }
+        composable(Routes.PROJECTS) { ProjectListScreen(navController) }
+        composable(Routes.EMPLOYEES) { EmployeeListScreen(navController) }
+        composable(Routes.INVENTORY) { InventoryScreen(navController) }
+        composable(Routes.REPORTS) { ReportsScreen(navController) }
 
         // --- Administrator -------------------------------------------------
         composable(Routes.ADMIN_DASHBOARD) { ComingSoonScreen("Admin Dashboard") }
@@ -75,17 +83,32 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         composable(
             route = Routes.PROJECT_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_PROJECT_ID) { type = NavType.StringType })
-        ) { ComingSoonScreen("Project Details") }
+        ) { entry ->
+            ProjectDetailScreen(
+                navController = navController,
+                projectId = entry.arguments?.getString(Routes.ARG_PROJECT_ID).orEmpty()
+            )
+        }
 
         composable(
             route = Routes.EMPLOYEE_PROFILE_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_EMPLOYEE_ID) { type = NavType.StringType })
-        ) { ComingSoonScreen("Employee Profile") }
+        ) { entry ->
+            EmployeeProfileScreen(
+                navController = navController,
+                employeeId = entry.arguments?.getString(Routes.ARG_EMPLOYEE_ID).orEmpty()
+            )
+        }
 
         composable(
             route = Routes.MATERIAL_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_MATERIAL_ID) { type = NavType.StringType })
-        ) { ComingSoonScreen("Material Details") }
+        ) { entry ->
+            MaterialDetailScreen(
+                navController = navController,
+                materialId = entry.arguments?.getString(Routes.ARG_MATERIAL_ID).orEmpty()
+            )
+        }
 
         composable(
             route = Routes.CHAT_PATTERN,
