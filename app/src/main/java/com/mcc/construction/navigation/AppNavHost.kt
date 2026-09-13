@@ -27,7 +27,6 @@ import com.mcc.construction.ui.screens.projects.ProjectDetailScreen
 import com.mcc.construction.ui.screens.projects.ProjectListScreen
 import com.mcc.construction.ui.screens.reports.ReportsScreen
 import com.mcc.construction.ui.screens.settings.SettingsScreen
-import com.mcc.construction.ui.screens.splash.SplashScreen
 import com.mcc.construction.ui.screens.sync.SyncStatusScreen
 import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
 import com.mcc.construction.ui.screens.tasks.TaskListScreen
@@ -40,11 +39,13 @@ import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
 fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
     NavHost(
         navController = navController,
-        startDestination = Routes.SPLASH,
+        // Login is the entry point. There is no in-app splash destination: the
+        // launch theme's system splash covers startup, so a Compose splash here
+        // would only ever be an artificial delay in front of this screen.
+        startDestination = Routes.LOGIN,
         modifier = modifier
     ) {
         // --- Entry ---------------------------------------------------------
-        composable(Routes.SPLASH) { SplashScreen(navController) }
         composable(Routes.LOGIN) { LoginScreen(navController) }
         composable(Routes.FORGOT_PASSWORD) { ForgotPasswordScreen(navController) }
 

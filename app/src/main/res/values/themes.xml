@@ -2,4 +2,32 @@
 <resources>
 
     <style name="Theme.MCCConstruction" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <!--
+        The launch theme, and the app's actual brand moment.
+
+        Android 12+ always draws a system splash over a cold start and holds it
+        until the app renders its first frame. A Compose "splash screen" behind
+        that is invisible: ours lived 1400ms, which expired underneath the system
+        splash, so the branded screen was never seen on API 31+ and users went
+        straight from the system splash to Login. Rather than fight it, the
+        system splash IS the branding now.
+
+        Kept light in both light and dark mode on purpose. The mark is fixed
+        navy-and-gold artwork on transparency, so it needs a light ground, and a
+        white splash also hands over cleanly to the white Login surface with no
+        flash between them.
+
+        The icon is the launcher foreground, so the icon the user tapped is the
+        one that grows into the splash.
+
+        Deliberately no setKeepOnScreenCondition: the splash lasts exactly as
+        long as startup does. Holding it longer would re-add the artificial delay
+        this replaces.
+    -->
+    <style name="Theme.MCCConstruction.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/brand_splash_background</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="postSplashScreenTheme">@style/Theme.MCCConstruction</item>
+    </style>
 </resources>

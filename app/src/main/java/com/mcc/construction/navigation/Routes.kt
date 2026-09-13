@@ -2,7 +2,6 @@ package com.mcc.construction.navigation
 
 object Routes {
     // Entry
-    const val SPLASH = "splash"
     const val LOGIN = "login"
     const val FORGOT_PASSWORD = "forgot_password"
 

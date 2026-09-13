@@ -31,7 +31,7 @@ imperfections" for why.
 ### Entry
 | File | Screen |
 |---|---|
-| `phone-01-splash` | Splash |
+| `phone-01-splash` | Splash — the branded launch screen, drawn by the system splash |
 | `phone-02-login` | Login |
 | `phone-03-login-validation-error` | Login, validation on empty submit |
 | `phone-04-forgot-password` | Forgot Password |
