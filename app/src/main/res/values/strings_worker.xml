@@ -76,4 +76,37 @@
     <string name="tasks_filter_empty_message">No tasks with this status. Try another filter.</string>
     <string name="tasks_pick_title">Pick a task</string>
     <string name="tasks_pick_message">Choose a task on the left to see its details.</string>
+
+    <!-- Task details -->
+    <string name="task_detail_title">Task details</string>
+    <string name="task_detail_project">Project</string>
+    <string name="task_detail_location">Location</string>
+    <string name="task_detail_deadline">Deadline</string>
+    <string name="task_detail_assigned">Assigned to</string>
+    <string name="task_detail_unassigned">Not assigned yet</string>
+    <string name="task_detail_description">What to do</string>
+    <string name="task_detail_proof">Proof of work</string>
+    <string name="task_detail_proof_hint">Add a photo of the finished work so your foreman can sign it off.</string>
+    <string name="task_detail_proof_done">Photos taken when the work was done.</string>
+    <string name="task_steps_description">Task progress: %1$s</string>
+    <string name="task_action_start">Start task</string>
+    <string name="task_action_complete">Mark complete</string>
+    <string name="task_action_done">Task completed</string>
+    <string name="task_started_message">Task started</string>
+    <string name="task_started_offline_message">Task started. Saved offline and will upload when you reconnect.</string>
+    <string name="task_completed_message">Task marked complete</string>
+    <string name="task_completed_offline_message">Task marked complete. Saved offline and will upload when you reconnect.</string>
+    <string name="task_photos_added">Photos attached: %1$d</string>
+    <string name="task_photo_limit">Only %1$d photos fit on a task. Extra photos were left out.</string>
+    <string name="task_photo_removed">Photo removed</string>
+    <string name="task_no_photo_title">Complete without a photo?</string>
+    <string name="task_no_photo_message">A photo lets your foreman sign the work off without a site visit. You can still complete the task without one.</string>
+    <string name="task_no_photo_add">Add a photo</string>
+    <string name="task_no_photo_complete">Complete anyway</string>
+    <string name="task_blocked_title">This task is blocked</string>
+    <string name="task_blocked_message">Work cannot start until the problem is cleared. Message your foreman for an update.</string>
+    <string name="task_read_only_title">Not assigned to you</string>
+    <string name="task_read_only_message">You can read this task, but only the people on it can update it.</string>
+    <string name="task_not_found_title">Task not found</string>
+    <string name="task_not_found_message">It may have been removed or reassigned. Go back to your task list.</string>
 </resources>

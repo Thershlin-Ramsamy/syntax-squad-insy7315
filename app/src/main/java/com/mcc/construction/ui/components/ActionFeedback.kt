@@ -18,6 +18,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.text
@@ -38,12 +39,16 @@ import com.mcc.construction.ui.theme.colors
  * ```
  *
  * Errors use the danger tone so they are not mistaken for confirmations.
+ *
+ * @param bottomInset space to keep clear below the snackbar, such as a
+ *   screen's own bottom action bar, so the message never covers a button.
  */
 @Composable
 fun ActionFeedbackHost(
     message: UiMessage?,
     onMessageShown: () -> Unit,
     modifier: Modifier = Modifier,
+    bottomInset: Dp = 0.dp,
     content: @Composable BoxScope.() -> Unit
 ) {
     val hostState = remember { SnackbarHostState() }
@@ -66,6 +71,7 @@ fun ActionFeedbackHost(
                 .align(Alignment.BottomCenter)
                 .widthIn(max = Spacing.formMaxWidth)
                 .fillMaxWidth()
+                .padding(bottom = bottomInset)
                 .padding(Spacing.lg)
         ) { data ->
             val tone = if (message?.isError == true) Tone.Danger else Tone.Info

@@ -37,7 +37,7 @@ import com.mcc.construction.ui.screens.settings.SettingsRoute
 import com.mcc.construction.ui.screens.splash.SplashDestination
 import com.mcc.construction.ui.screens.splash.SplashRoute
 import com.mcc.construction.ui.screens.sync.SyncStatusRoute
-import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
+import com.mcc.construction.ui.screens.tasks.TaskDetailRoute
 import com.mcc.construction.ui.screens.tasks.TaskListRoute
 import com.mcc.construction.ui.screens.worker.AttendanceScreen
 import com.mcc.construction.ui.screens.worker.DailyReportScreen
@@ -121,7 +121,10 @@ fun AppNavHost(
         }
         composable(Routes.TASKS) {
             TaskListRoute(
-                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) }
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) },
+                detailPane = { taskId ->
+                    TaskDetailRoute(taskId = taskId, onBack = {}, embedded = true)
+                }
             )
         }
         composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
@@ -150,9 +153,9 @@ fun AppNavHost(
             route = Routes.TASK_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.StringType })
         ) { entry ->
-            TaskDetailScreen(
-                navController = navController,
-                taskId = entry.arguments?.getString(Routes.ARG_TASK_ID).orEmpty()
+            TaskDetailRoute(
+                taskId = taskIdFrom(entry.arguments?.getString(Routes.ARG_TASK_ID)),
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -232,3 +235,10 @@ private val WorkerDestination.route: String
         WorkerDestination.INCIDENT_REPORT -> Routes.INCIDENT_REPORT
         WorkerDestination.NOTIFICATIONS -> Routes.NOTIFICATIONS
     }
+
+/**
+ * Task ids in routes are numbers. Older screens still pass the prototype's
+ * "T-101" form; its digits are the same id, so both work.
+ */
+private fun taskIdFrom(argument: String?): Int =
+    argument.orEmpty().filter(Char::isDigit).toIntOrNull() ?: -1
