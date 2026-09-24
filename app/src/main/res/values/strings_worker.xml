@@ -207,4 +207,17 @@
     <string name="incident_sent_title">Incident reported</string>
     <string name="incident_sent_message">Your %1$s incident has gone to the safety officer.</string>
     <string name="incident_sent_offline_message">Your %1$s incident is saved on this device and will reach the safety officer when you are back online.</string>
+
+    <!-- Messages -->
+    <string name="messages_empty_title">No messages yet</string>
+    <string name="messages_empty_message">Messages from your foreman and crew appear here.</string>
+    <plurals name="messages_unread_total">
+        <item quantity="one">%d unread message</item>
+        <item quantity="other">%d unread messages</item>
+    </plurals>
+    <plurals name="messages_unread_count">
+        <item quantity="one">%d unread</item>
+        <item quantity="other">%d unread</item>
+    </plurals>
+    <string name="messages_you_prefix">You: %1$s</string>
 </resources>

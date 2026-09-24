@@ -26,7 +26,7 @@ import com.mcc.construction.ui.screens.inventory.MaterialDetailScreen
 import com.mcc.construction.ui.screens.login.ForgotPasswordRoute
 import com.mcc.construction.ui.screens.login.LoginRoute
 import com.mcc.construction.ui.screens.messages.ChatScreen
-import com.mcc.construction.ui.screens.messages.MessagesScreen
+import com.mcc.construction.ui.screens.messages.MessagesRoute
 import com.mcc.construction.ui.screens.notifications.NotificationsRoute
 import com.mcc.construction.ui.screens.profile.ProfileRoute
 import com.mcc.construction.ui.screens.profile.ProfileShortcut
@@ -149,7 +149,9 @@ fun AppNavHost(
                 onDone = { navController.popBackStack() }
             )
         }
-        composable(Routes.MESSAGES) { MessagesScreen(navController) }
+        composable(Routes.MESSAGES) {
+            MessagesRoute(onOpenChat = { userId -> navController.navigate(Routes.chat(userId.toString())) })
+        }
 
         // --- Manager -------------------------------------------------------
         composable(Routes.MANAGER_DASHBOARD) { ManagerDashboardScreen(navController) }
