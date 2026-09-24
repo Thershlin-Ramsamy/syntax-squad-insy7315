@@ -144,6 +144,7 @@ private fun TaskListColumn(
         if (state.filter == TaskFilter.ALL) {
             section(R.string.tasks_section_now, state.dueNow, state.today, selected, onTaskClick)
             section(R.string.tasks_section_coming_up, state.comingUp, state.today, selected, onTaskClick)
+            section(R.string.tasks_section_done_earlier, state.doneEarlier, state.today, selected, onTaskClick)
         } else {
             items(state.visible, key = { it.task.taskId }) { item ->
                 TaskCard(item, state.today, onClick = { onTaskClick(item.task.taskId) }, selected = item.task.taskId == selected)

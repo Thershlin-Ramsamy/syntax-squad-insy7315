@@ -70,4 +70,19 @@ class TaskListViewModelTest {
 
         assertEquals(105, vm.uiState.value.paneTaskId)
     }
+
+    @Test
+    fun earlierFinishedWorkStaysOutOfToday() = runTest {
+        val c = testContainer()
+        c.authRepository.signIn("manager@mcc.co.za", "pw")
+        val vm = viewModel(c)
+        keepCollecting(vm.uiState)
+
+        val state = vm.uiState.value
+        // Task 106 was finished yesterday; 103 was finished today.
+        assertFalse(state.dueNow.any { it.task.taskId == 106 })
+        assertTrue(state.doneEarlier.any { it.task.taskId == 106 })
+        assertTrue(state.dueNow.any { it.task.taskId == 103 })
+        assertEquals(state.visible.size, state.dueNow.size + state.comingUp.size + state.doneEarlier.size)
+    }
 }

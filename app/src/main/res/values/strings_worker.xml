@@ -69,6 +69,7 @@
     <string name="tasks_filter_completed">Completed (%1$d)</string>
     <string name="tasks_section_now">Today</string>
     <string name="tasks_section_coming_up">Coming up</string>
+    <string name="tasks_section_done_earlier">Done earlier</string>
     <string name="tasks_showing_all">Showing every task across your projects.</string>
     <string name="tasks_empty_title">No tasks assigned</string>
     <string name="tasks_empty_message">When your foreman assigns you work it appears here.</string>
