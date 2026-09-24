@@ -16,7 +16,8 @@ import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
 import com.mcc.construction.ui.screens.admin.AuditLogScreen
 import com.mcc.construction.ui.screens.admin.UserManagementScreen
 import com.mcc.construction.ui.screens.dashboard.ManagerDashboardScreen
-import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
+import com.mcc.construction.ui.screens.dashboard.WorkerDashboardRoute
+import com.mcc.construction.ui.screens.dashboard.WorkerDestination
 import com.mcc.construction.ui.screens.documents.DocumentsScreen
 import com.mcc.construction.ui.screens.employees.EmployeeListScreen
 import com.mcc.construction.ui.screens.employees.EmployeeProfileScreen
@@ -112,7 +113,12 @@ fun AppNavHost(
         composable(Routes.DOCUMENTS) { DocumentsScreen(navController) }
 
         // --- Worker --------------------------------------------------------
-        composable(Routes.WORKER_DASHBOARD) { WorkerDashboardScreen(navController) }
+        composable(Routes.WORKER_DASHBOARD) {
+            WorkerDashboardRoute(
+                onNavigate = { destination -> navController.navigate(destination.route) },
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) }
+            )
+        }
         composable(Routes.TASKS) { TaskListScreen(navController) }
         composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
         composable(Routes.DAILY_REPORT) { DailyReportScreen(navController) }
@@ -211,4 +217,14 @@ private val ProfileShortcut.route: String
         ProfileShortcut.NOTIFICATIONS -> Routes.NOTIFICATIONS
         ProfileShortcut.SYNC -> Routes.SYNC_STATUS
         ProfileShortcut.SETTINGS -> Routes.SETTINGS
+    }
+
+private val WorkerDestination.route: String
+    get() = when (this) {
+        WorkerDestination.TASKS -> Routes.TASKS
+        WorkerDestination.ATTENDANCE -> Routes.ATTENDANCE
+        WorkerDestination.DAILY_REPORT -> Routes.DAILY_REPORT
+        WorkerDestination.SAFETY_CHECKLIST -> Routes.SAFETY_CHECKLIST
+        WorkerDestination.INCIDENT_REPORT -> Routes.INCIDENT_REPORT
+        WorkerDestination.NOTIFICATIONS -> Routes.NOTIFICATIONS
     }

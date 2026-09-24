@@ -18,4 +18,47 @@
     <string name="weather_windy">Windy</string>
     <string name="weather_hot">Hot</string>
     <string name="weather_cold">Cold</string>
+
+    <!-- Tasks, shared by dashboard and task list -->
+    <string name="task_due_today">Due today</string>
+    <string name="task_due_tomorrow">Due tomorrow</string>
+    <string name="task_due_on">Due %1$s</string>
+    <string name="task_overdue_since">Overdue since %1$s</string>
+
+    <!-- Attendance, shared by dashboard and attendance -->
+    <string name="attendance_clock_in">Clock in</string>
+    <string name="attendance_clock_out">Clock out</string>
+    <string name="attendance_working">Working…</string>
+    <string name="attendance_not_clocked_in">Not clocked in</string>
+    <string name="attendance_on_shift_since">On shift since %1$s</string>
+    <string name="attendance_on_shift_for">On shift for %1$d h %2$d min</string>
+    <string name="attendance_clocked_in_message">Clocked in at %1$s</string>
+    <string name="attendance_clocked_out_message">Clocked out at %1$s. %2$s hours worked.</string>
+
+    <!-- Worker dashboard -->
+    <string name="dashboard_greeting_morning">Good morning, %1$s</string>
+    <string name="dashboard_greeting_afternoon">Good afternoon, %1$s</string>
+    <string name="dashboard_greeting_evening">Good evening, %1$s</string>
+    <string name="dashboard_date_and_site">%1$s · %2$s</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_in_progress">In progress</string>
+    <string name="dashboard_to_do">To do</string>
+    <string name="dashboard_done">Done</string>
+    <string name="dashboard_quick_actions">Quick actions</string>
+    <plurals name="dashboard_open_tasks">
+        <item quantity="one">%d open</item>
+        <item quantity="other">%d open</item>
+    </plurals>
+    <string name="dashboard_checklist_due">Due today</string>
+    <string name="dashboard_checklist_done">Done today</string>
+    <string name="dashboard_report_incident">Report incident</string>
+    <plurals name="dashboard_unread_notifications">
+        <item quantity="one">%d unread notification</item>
+        <item quantity="other">%d unread notifications</item>
+    </plurals>
+    <string name="dashboard_unread_notifications_hint">Task changes and safety notices</string>
+    <string name="dashboard_next_up">Next up</string>
+    <string name="dashboard_view_all">View all</string>
+    <string name="dashboard_all_done_title">Nothing left for today</string>
+    <string name="dashboard_all_done_message">Every task due today is done. Check with your foreman for the next job.</string>
 </resources>
