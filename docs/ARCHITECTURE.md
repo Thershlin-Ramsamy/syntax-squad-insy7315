@@ -233,7 +233,9 @@ private fun TaskListScreenPreview() {
 
 ### 4. Checklist before you commit
 
-- [ ] Every user-facing string is in `res/values/strings.xml`.
+- [ ] Every user-facing string is in `res/values/` — `strings.xml`, or a file
+      for your area such as `strings_worker.xml`, which keeps merge conflicts
+      between team members down.
 - [ ] Every meaningful icon has a `contentDescription`; decorative icons
       (next to a text label) use `null`.
 - [ ] Tappable things are at least 48dp; primary actions use `PrimaryButton`
@@ -264,6 +266,17 @@ private fun TaskListScreenPreview() {
 | `AppTextField` | Labelled text field with error text and keyboard actions. |
 | `SegmentedFilter` | A row of filter chips. |
 | `MetricTile`, `MetricStrip`, `ProgressTrack` | Dashboard figures. |
+| `ChoiceChip`, `ChoiceChipGroup` | Large, glove-friendly picks — use instead of a text field whenever the answer is one of a few options. |
+| `PhotoAttachmentRow`, `rememberPhotoPicker` | Photo thumbnails with an "Add photo" tile, and the Android photo picker behind it (no storage permission needed). |
+| `ActionFeedbackHost` | Wraps a screen and shows its `UiMessage` as a snackbar — every action gets a visible confirmation or error. |
+
+ViewModels report one-off feedback as a `UiMessage` (in `ui/common`) — a
+string resource plus arguments, so ViewModels stay free of Android resources —
+and clear it when the screen calls back. `WorkerDashboardViewModel` and
+`TaskDetailViewModel` show the pattern.
+
+ViewModels that need "now" or "today" take the `Clock` from `AppContainer`
+rather than reading the system clock, so tests can pin the date.
 
 For a status, take the label and tone from `ui/ModelStyle.kt` so it matches
 everywhere:
@@ -299,7 +312,10 @@ measuring:
 if (LocalWindowLayout.current.isExpanded) TwoColumns() else OneColumn()
 ```
 
-`ProfileScreen` and `SyncStatusScreen` are working examples.
+`ProfileScreen`, `SyncStatusScreen` and the worker dashboard are working
+examples. For list-and-detail screens, the task list and the chat list keep a
+detail pane beside the list on expanded windows instead of pushing a new
+screen — see `TaskListRoute`'s `detailPane` and `MessagesRoute`'s `chatPane`.
 
 To see it live, run the app and resize the emulator window, or use Android
 Studio's resizable device. The screenshot tooling can also force a width with
@@ -326,10 +342,11 @@ Studio's resizable device. The screenshot tooling can also force a width with
 
 ## Migrating a legacy screen
 
-Screens that still take a `NavController` and read `MockRepository` (dashboards,
-projects, tasks, employees, inventory, reports, messages, documents,
-attendance, daily report, safety, incidents, admin) work, but are on the old
-path. To move one across:
+Screens that still take a `NavController` and read `MockRepository` (manager
+dashboard, projects, employees, inventory, reports, documents, admin) work, but
+are on the old path. The worker screens — dashboard, tasks, task details,
+attendance, daily report, safety checklist, incident report, messages and
+chat — have already moved and are good examples. To move one across:
 
 1. Write a `…UiState` and `…ViewModel` that read from the repositories.
 2. Change the screen to take state and callbacks; add a `…Route`.
@@ -338,10 +355,11 @@ path. To move one across:
 4. Move hard-coded text into `strings.xml`.
 5. Update its entry in `AppNavHost`.
 
-Until then, the app root keeps `MockRepository.currentRole` and
-`MockRepository.isOnline` in step with the real session and sync state, so
-legacy screens show the right user. When no screen reads `MockRepository`,
-delete `data/legacy` and the `LegacyStateBridge` in `AppRoot.kt`.
+Until then, the app root keeps `MockRepository.currentRole` in step with the
+session and copies task statuses from the `TaskRepository` into the legacy task
+list, so legacy screens show the right user and the progress workers record.
+When no screen reads `MockRepository`, delete `data/legacy` and the
+`LegacyStateBridge` in `AppRoot.kt`.
 
 ## Fields beyond the ERD
 
@@ -356,7 +374,12 @@ response.
 | `Inventory` | `unitCost` | Rand values on material screens |
 | `Notification` | `type` | Picks the icon and the screen a notification opens |
 | `SafetyChecklistItem` | whole type | The checklist template a worker completes; the result is a `SafetyInspection` |
-| `IncidentSeverity` | meaning of `SeverityLevel` | 1 = near miss, 2 = minor, 3 = serious |
+| `IncidentSeverity` | meaning of `SeverityLevel` | 1 = near miss, 2 = minor, 3 = moderate, 4 = serious, 5 = critical |
+| `IncidentReport` | `photoUris` | Photos attached to an incident |
+| `DailyReport` | `photoUris` | Photos attached to a daily report |
+| `TaskPhoto` | whole type | Proof-of-work photos on a task (`Task.uploadImage()` in the class diagram) |
+| `Message` | `isRead` | Unread badges in the chat list |
+| `Weather` | stored values | The fixed values written to `DAILY_REPORTS.Weather` |
 
 `PasswordHash` is deliberately not in `User`: it never leaves the server.
 
@@ -368,9 +391,11 @@ response.
 
 - `data/fake/…Test` — seed data integrity, auth, sync queue, notifications,
   attendance.
-- `ui/screens/…ViewModelTest` — the sign-in, splash and foundation screen
-  ViewModels, run against the fakes.
+- `ui/screens/…ViewModelTest` — every screen ViewModel (sign-in, splash,
+  foundation and worker screens), run against the fakes.
 - `navigation/NavMenusTest` — which items each role sees at each size.
 
 Tests use `testContainer()` (a `FakeAppContainer` with a fixed clock and no
-simulated delay) and `MainDispatcherRule`.
+simulated delay) and `MainDispatcherRule`; `workerContainer()` and
+`keepCollecting()` in `ui/screens/WorkerTestSupport.kt` sign in the demo worker
+and keep `WhileSubscribed` state flowing.
