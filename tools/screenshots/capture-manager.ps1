@@ -9,8 +9,8 @@ Enable-DemoMode
 
 Write-Host "== manager =="
 Restart-App
-Expect "Continue as" | Out-Null
-Sign-In "Projects, teams" "n.khumalo"
+Expect "Demo accounts" | Out-Null
+Sign-In "Manager"
 Expect "Good morning" | Out-Null
 Shot "$P-20-manager-dashboard"
 
@@ -35,14 +35,13 @@ Tap-Text "Sipho Dlamini" 0 2400 | Out-Null
 Shot "$P-26-employee-profile"
 Go-Back
 
-Tap-Text "Tasks" 0 2200 | Out-Null
+# Tasks is on the rail at wider sizes; on a phone it is a Profile shortcut,
+# and Profile is the account button in the app bar.
+Tap-Text "Open your profile" 0 2200 | Out-Null
+Tap-Text "Tasks" 0 2200 -Exact | Out-Null
 Shot "$P-27-manager-task-list"
 
-# Inventory and Reports are rail-only destinations; on a phone they are
-# reached from the dashboard's quick actions.
-Tap-Text "Dashboard" 0 2200 | Out-Null
-Scroll-Down 3
-Tap-Text "Inventory" 0 2400 | Out-Null
+Tap-Text "Inventory" 0 2400 -Exact | Out-Null
 Shot "$P-28-inventory"
 
 Tap-Text "Rebar Y12" 0 2400 | Out-Null
@@ -50,9 +49,7 @@ Shot "$P-29-material-detail"
 Go-Back
 Go-Back
 
-Tap-Text "Dashboard" 0 2200 | Out-Null
-Scroll-Down 3
-Tap-Text "Reports" 0 2400 | Out-Null
+Tap-Text "Reports" 0 2400 -Exact | Out-Null
 Shot "$P-30-reports"
 Scroll-Down 2
 Shot "$P-31-reports-incidents"

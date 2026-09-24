@@ -92,7 +92,7 @@ Two further differences:
 |---|---|---|---|---|
 | `phone` | 1080×2400 | 420 dpi | 411 dp | Bottom bar |
 | `tablet` | 1536×2048 | 320 dpi | 768 dp | Navigation rail |
-| `desktop` | 1920×1200 | 320 dpi | 960 dp | Permanent drawer |
+| `desktop` | 1920×1200 | 320 dpi | 960 dp | Navigation rail |
 
 Density is the lever, not resolution. Forcing a large `wm size` on a
 software-rendered emulator makes SystemUI ANR repeatedly and blanks the

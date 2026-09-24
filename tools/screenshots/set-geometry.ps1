@@ -16,7 +16,7 @@ $target = if ($args[0]) { $args[0] } else { "phone" }
 $geometries = @{
     phone   = @{ size = "1080x2400"; density = 420; dp = 411; chrome = "bottom bar" }
     tablet  = @{ size = "1536x2048"; density = 320; dp = 768; chrome = "navigation rail" }
-    desktop = @{ size = "1920x1200"; density = 320; dp = 960; chrome = "permanent drawer" }
+    desktop = @{ size = "1920x1200"; density = 320; dp = 960; chrome = "navigation rail" }
 }
 
 if (-not $geometries.ContainsKey($target)) {

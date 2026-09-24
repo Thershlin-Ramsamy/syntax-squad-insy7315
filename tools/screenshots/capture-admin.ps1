@@ -9,8 +9,8 @@ Enable-DemoMode
 
 Write-Host "== administrator =="
 Restart-App
-Expect "Continue as" | Out-Null
-Sign-In "Users, settings" "r.vanwyk"
+Expect "Demo accounts" | Out-Null
+Sign-In "Administrator"
 Expect "System overview" | Out-Null
 Shot "$P-32-admin-dashboard"
 
