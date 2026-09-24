@@ -33,7 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.legacy.label
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.theme.Spacing
 
 /**

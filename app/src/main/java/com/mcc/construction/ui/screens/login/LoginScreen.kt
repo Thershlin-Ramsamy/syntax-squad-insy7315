@@ -51,8 +51,10 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.mcc.construction.R
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.blurb
+import com.mcc.construction.data.legacy.label
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.navigation.NavMenus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AppTextField

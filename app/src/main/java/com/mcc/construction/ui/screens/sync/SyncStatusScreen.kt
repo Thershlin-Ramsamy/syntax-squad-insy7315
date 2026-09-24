@@ -15,7 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Banner
 import com.mcc.construction.ui.components.DetailScaffold

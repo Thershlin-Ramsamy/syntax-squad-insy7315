@@ -16,8 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.NotificationKind
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.NotificationKind
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.EmptyState
 import com.mcc.construction.ui.components.LeadingIcon

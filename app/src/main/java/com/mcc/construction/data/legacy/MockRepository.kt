@@ -1,10 +1,20 @@
-package com.mcc.construction.data
+package com.mcc.construction.data.legacy
 
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import com.mcc.construction.data.model.UserRole
 
 /**
+ * Legacy in-memory store from the first prototype pass.
+ *
+ * Superseded by the repository layer (`data.repository` interfaces backed by
+ * `data.fake` implementations). It stays only so the screens that have not
+ * been migrated yet keep compiling and showing data; nothing new should be
+ * added here. See docs/ARCHITECTURE.md, "Migrating a legacy screen".
+ *
+ * Original notes:
+ *
  * In-memory data store standing in for both the API and local persistence.
  *
  * Task 1 has no backend by design, so this object holds every list the UI reads

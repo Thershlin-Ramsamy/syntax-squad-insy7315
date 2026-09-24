@@ -29,10 +29,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.mcc.construction.data.AccountStatus
-import com.mcc.construction.data.ManagedUser
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.legacy.AccountStatus
+import com.mcc.construction.data.legacy.ManagedUser
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.label
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Avatar
 import com.mcc.construction.ui.components.EmptyState

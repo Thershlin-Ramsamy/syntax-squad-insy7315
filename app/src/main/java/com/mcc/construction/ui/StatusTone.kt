@@ -1,13 +1,13 @@
 package com.mcc.construction.ui
 
-import com.mcc.construction.data.AccountStatus
-import com.mcc.construction.data.AuditSeverity
-import com.mcc.construction.data.EmployeeStatus
-import com.mcc.construction.data.IncidentSeverity
-import com.mcc.construction.data.ProjectStatus
-import com.mcc.construction.data.StockLevel
-import com.mcc.construction.data.TaskPriority
-import com.mcc.construction.data.TaskStatus
+import com.mcc.construction.data.legacy.AccountStatus
+import com.mcc.construction.data.legacy.AuditSeverity
+import com.mcc.construction.data.legacy.EmployeeStatus
+import com.mcc.construction.data.legacy.IncidentSeverity
+import com.mcc.construction.data.legacy.ProjectStatus
+import com.mcc.construction.data.legacy.StockLevel
+import com.mcc.construction.data.legacy.TaskPriority
+import com.mcc.construction.data.legacy.TaskStatus
 import com.mcc.construction.ui.theme.Tone
 
 /**

@@ -23,8 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.TaskStatus
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.TaskStatus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AccentButton
 import com.mcc.construction.ui.components.Banner

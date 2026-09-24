@@ -21,9 +21,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.TaskPriority
-import com.mcc.construction.data.TaskStatus
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.TaskPriority
+import com.mcc.construction.data.legacy.TaskStatus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.EmptyState
 import com.mcc.construction.ui.components.ListRow

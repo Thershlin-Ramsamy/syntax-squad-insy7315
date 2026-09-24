@@ -1,23 +1,36 @@
-package com.mcc.construction.data
+package com.mcc.construction.data.legacy
+
+import com.mcc.construction.data.model.UserRole
 
 /**
- * Domain types for the prototype.
+ * Legacy, UI-shaped types from the first prototype pass.
  *
- * These are plain data classes with no persistence or serialisation concerns —
- * the whole data layer lives in memory (see [MockRepository]). They are shaped
- * the way a real API would return them so that swapping the repository for a
- * network client in Task 2 does not require touching the screens.
+ * These predate the repository layer in `data.model` / `data.repository` and
+ * are kept only so the screens that still read [MockRepository] keep working
+ * while they are migrated. New code should use the ERD-aligned models in
+ * `com.mcc.construction.data.model` through a repository instead — see
+ * docs/ARCHITECTURE.md, "Migrating a legacy screen".
  */
 
 // ---------------------------------------------------------------------------
 // Identity
 // ---------------------------------------------------------------------------
 
-enum class UserRole(val label: String, val blurb: String) {
-    WORKER("Worker", "Today's tasks, clock in/out, reports"),
-    MANAGER("Manager", "Projects, teams, inventory, reports"),
-    ADMINISTRATOR("Administrator", "Users, settings, audit logs")
-}
+/** English label for legacy screens. New UI uses `UserRole.labelRes` instead. */
+val UserRole.label: String
+    get() = when (this) {
+        UserRole.WORKER -> "Worker"
+        UserRole.MANAGER -> "Manager"
+        UserRole.ADMINISTRATOR -> "Administrator"
+    }
+
+/** One-line role summary for the legacy sign-in screen. */
+val UserRole.blurb: String
+    get() = when (this) {
+        UserRole.WORKER -> "Today's tasks, clock in/out, reports"
+        UserRole.MANAGER -> "Projects, teams, inventory, reports"
+        UserRole.ADMINISTRATOR -> "Users, settings, audit logs"
+    }
 
 data class UserProfile(
     val name: String,

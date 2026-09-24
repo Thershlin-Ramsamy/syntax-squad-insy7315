@@ -28,8 +28,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.label
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Avatar

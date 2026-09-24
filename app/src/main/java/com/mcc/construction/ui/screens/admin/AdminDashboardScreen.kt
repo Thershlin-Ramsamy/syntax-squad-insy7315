@@ -23,9 +23,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.AccountStatus
-import com.mcc.construction.data.AuditSeverity
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.AccountStatus
+import com.mcc.construction.data.legacy.AuditSeverity
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.label
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Banner

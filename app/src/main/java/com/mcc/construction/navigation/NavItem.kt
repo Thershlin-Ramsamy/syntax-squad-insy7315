@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.model.UserRole
 
 data class NavItem(
     val route: String,
