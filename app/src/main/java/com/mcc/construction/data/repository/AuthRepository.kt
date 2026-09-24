@@ -22,6 +22,9 @@ sealed interface SignInResult {
 
     /** The account exists but the password was rejected. */
     data object InvalidPassword : SignInResult
+
+    /** An administrator has suspended the account. */
+    data object AccountSuspended : SignInResult
 }
 
 /**

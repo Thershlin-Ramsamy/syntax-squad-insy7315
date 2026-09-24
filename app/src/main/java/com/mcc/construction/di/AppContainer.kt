@@ -13,6 +13,7 @@ import com.mcc.construction.data.repository.ProjectRepository
 import com.mcc.construction.data.repository.SafetyRepository
 import com.mcc.construction.data.repository.SettingsRepository
 import com.mcc.construction.data.repository.SyncRepository
+import com.mcc.construction.data.repository.SystemSettingsRepository
 import com.mcc.construction.data.repository.TaskRepository
 import com.mcc.construction.data.repository.UserRepository
 import java.time.Clock
@@ -40,6 +41,7 @@ interface AppContainer {
     val auditLogRepository: AuditLogRepository
     val syncRepository: SyncRepository
     val settingsRepository: SettingsRepository
+    val systemSettingsRepository: SystemSettingsRepository
 
     /**
      * The time source for anything that needs "now" or "today". ViewModels

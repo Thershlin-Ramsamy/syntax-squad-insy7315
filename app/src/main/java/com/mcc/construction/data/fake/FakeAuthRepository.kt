@@ -34,6 +34,7 @@ class FakeAuthRepository(
         delay(latency)
         val user = users.findByEmail(email.trim()) ?: return SignInResult.UnknownAccount
         if (password.isBlank()) return SignInResult.InvalidPassword
+        if (!user.isActive) return SignInResult.AccountSuspended
 
         val session = UserSession(user = user, signedInAt = LocalDateTime.now(clock))
         _session.value = session

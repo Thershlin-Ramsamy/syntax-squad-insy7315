@@ -20,6 +20,7 @@ enum class LoginError {
     EMAIL_REQUIRED,
     EMAIL_INVALID,
     UNKNOWN_ACCOUNT,
+    ACCOUNT_SUSPENDED,
     PASSWORD_REQUIRED,
     PASSWORD_INCORRECT
 }
@@ -97,6 +98,9 @@ class LoginViewModel(
 
                     SignInResult.UnknownAccount ->
                         it.copy(isSubmitting = false, emailError = LoginError.UNKNOWN_ACCOUNT)
+
+                    SignInResult.AccountSuspended ->
+                        it.copy(isSubmitting = false, emailError = LoginError.ACCOUNT_SUSPENDED)
 
                     SignInResult.InvalidPassword ->
                         it.copy(isSubmitting = false, passwordError = LoginError.PASSWORD_INCORRECT)

@@ -4,6 +4,7 @@ import com.mcc.construction.data.model.Attendance
 import com.mcc.construction.data.model.PendingChangeType
 import com.mcc.construction.data.repository.AttendanceRepository
 import java.time.Clock
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -26,6 +27,9 @@ class FakeAttendanceRepository(
         records.map { list ->
             list.filter { it.userId == userId }.sortedByDescending { it.clockIn }
         }
+
+    override fun observeAttendanceOn(date: LocalDate): Flow<List<Attendance>> =
+        records.map { list -> list.filter { it.date == date } }
 
     override fun observeOpenShift(userId: Int): Flow<Attendance?> =
         records.map { list -> list.firstOrNull { it.userId == userId && it.isOpen } }

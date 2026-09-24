@@ -20,9 +20,10 @@ data class Role(
  * screen needs the role, and resolving it once here saves each of them a lookup.
  * `PasswordHash` is deliberately absent: it never leaves the server.
  *
- * [jobTitle] and [employeeNumber] are not in the ERD yet. They are shown on
- * profile screens and are listed in docs/ARCHITECTURE.md under "Fields beyond
- * the ERD" so the backend team can add them to the USERS table or the API.
+ * [jobTitle], [employeeNumber] and [isActive] are not in the ERD yet. They
+ * are listed in docs/ARCHITECTURE.md under "Fields beyond the ERD" so the
+ * backend team can add them to the USERS table or the API. A user who is not
+ * active is suspended and cannot sign in.
  */
 data class User(
     val userId: Int,
@@ -32,7 +33,8 @@ data class User(
     val email: String,
     val phone: String,
     val jobTitle: String,
-    val employeeNumber: String
+    val employeeNumber: String,
+    val isActive: Boolean = true
 ) {
     val roleId: Int get() = role.roleId
     val fullName: String get() = "$firstName $lastName"

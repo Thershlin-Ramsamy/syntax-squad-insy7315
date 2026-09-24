@@ -445,6 +445,7 @@ private fun loginErrorMessage(error: LoginError): String = stringResource(
         LoginError.EMAIL_REQUIRED -> R.string.error_email_required
         LoginError.EMAIL_INVALID -> R.string.error_email_invalid
         LoginError.UNKNOWN_ACCOUNT -> R.string.error_unknown_account
+        LoginError.ACCOUNT_SUSPENDED -> R.string.error_account_suspended
         LoginError.PASSWORD_REQUIRED -> R.string.error_password_required
         LoginError.PASSWORD_INCORRECT -> R.string.error_password_incorrect
     }

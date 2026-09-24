@@ -25,28 +25,36 @@ class FakeAppContainer(
 
     private val seed = FakeSeedData(clock)
 
-    override val userRepository = FakeUserRepository(seed)
+    /** Whoever is signed in — the "actor" the fakes put on notifications and audit entries. */
+    private val currentUserId: () -> Int? = { authRepository.session.value?.user?.userId }
+
+    override val auditLogRepository = FakeAuditLogRepository(seed, clock)
+    override val userRepository = FakeUserRepository(seed, auditLogRepository, currentUserId)
     override val authRepository = FakeAuthRepository(userRepository, clock, latency)
     override val syncRepository = FakeSyncRepository(
         seed = seed,
         clock = clock,
         syncDuration = latency * SYNC_LATENCY_MULTIPLIER,
-        currentUserId = { authRepository.session.value?.user?.userId }
+        currentUserId = currentUserId
     )
+    override val notificationRepository = FakeNotificationRepository(seed, clock)
     override val projectRepository = FakeProjectRepository(seed)
-    override val taskRepository = FakeTaskRepository(seed, syncRepository, clock)
+
+    /** Stands in for the notifications the server would send when data changes. */
+    private val notifier = FakeNotifier(notificationRepository, userRepository, projectRepository, currentUserId)
+
+    override val taskRepository = FakeTaskRepository(seed, syncRepository, notifier, clock)
     override val attendanceRepository = FakeAttendanceRepository(seed, syncRepository, clock)
     override val dailyReportRepository =
-        FakeDailyReportRepository(seed, projectRepository, syncRepository, clock)
-    override val inventoryRepository = FakeInventoryRepository(seed)
-    override val documentRepository = FakeDocumentRepository(seed)
+        FakeDailyReportRepository(seed, projectRepository, syncRepository, notifier, clock)
+    override val inventoryRepository = FakeInventoryRepository(seed, notifier)
+    override val documentRepository = FakeDocumentRepository(seed, clock)
     override val safetyRepository =
-        FakeSafetyRepository(seed, projectRepository, syncRepository, clock)
-    override val notificationRepository = FakeNotificationRepository(seed)
+        FakeSafetyRepository(seed, projectRepository, syncRepository, notifier, clock)
     override val messageRepository =
         FakeMessageRepository(seed, userRepository, syncRepository, clock)
-    override val auditLogRepository = FakeAuditLogRepository(seed)
     override val settingsRepository = FakeSettingsRepository()
+    override val systemSettingsRepository = FakeSystemSettingsRepository(auditLogRepository, currentUserId)
 
     override val demoAccounts = listOf(
         DemoAccount(UserRole.WORKER, FakeSeedData.DEMO_WORKER_EMAIL),

@@ -4,6 +4,7 @@ import com.mcc.construction.data.model.Attendance
 import com.mcc.construction.data.model.AuditLog
 import com.mcc.construction.data.model.DailyReport
 import com.mcc.construction.data.model.Document
+import com.mcc.construction.data.model.DocumentCategory
 import com.mcc.construction.data.model.IncidentReport
 import com.mcc.construction.data.model.IncidentSeverity
 import com.mcc.construction.data.model.Inventory
@@ -87,7 +88,7 @@ class FakeSeedData(clock: Clock) {
         User(6, UserRole.WORKER, "Thabo", "Mokoena", "thabo.mokoena@mcc.co.za", "+27 84 771 2093", "General Labourer", "MCC-2077"),
         User(7, UserRole.WORKER, "Lerato", "Nkosi", "lerato.nkosi@mcc.co.za", "+27 82 118 6640", "Waterproofing Specialist", "MCC-2019"),
         User(8, UserRole.WORKER, "Anele", "Mthembu", "anele.mthembu@mcc.co.za", "+27 81 330 5512", "Tower Crane Operator", "MCC-2026"),
-        User(9, UserRole.MANAGER, "Pieter", "Coetzee", "pieter.coetzee@mcc.co.za", "+27 82 907 4471", "Quantity Surveyor", "MCC-1020"),
+        User(9, UserRole.MANAGER, "Pieter", "Coetzee", "pieter.coetzee@mcc.co.za", "+27 82 907 4471", "Quantity Surveyor", "MCC-1020", isActive = false),
         User(10, UserRole.WORKER, "Ayanda", "Zulu", "ayanda.zulu@mcc.co.za", "+27 73 552 8804", "Steel Fixer", "MCC-2088"),
         User(11, UserRole.WORKER, "Kagiso", "Molefe", "kagiso.molefe@mcc.co.za", "+27 71 604 2219", "Bricklayer", "MCC-2093")
     )
@@ -322,13 +323,16 @@ class FakeSeedData(clock: Clock) {
     // -----------------------------------------------------------------------
 
     val documents = listOf(
-        Document(1, 1, "Riverside-Structural-Drawings-RevC.pdf", 3, daysAgo(13, 9, 40)),
-        Document(2, 1, "Riverside-Block-C-Method-Statement.docx", 2, daysAgo(27, 14, 5)),
-        Document(3, 1, "Riverside-Health-and-Safety-File.pdf", 5, daysAgo(4, 8, 15)),
-        Document(4, 2, "HarbourView-Geotechnical-Report.pdf", 1, daysAgo(102, 11, 30)),
-        Document(5, 2, "HarbourView-Waterproofing-Specification.pdf", 2, daysAgo(20, 16, 45)),
-        Document(6, 3, "N3-Bridge-Environmental-Authorisation.pdf", 1, daysAgo(40, 10, 0)),
-        Document(7, 1, "Site-Induction-Pack.pdf", 4, daysAgo(114, 7, 30))
+        Document(1, 1, "Riverside-Structural-Drawings-RevC.pdf", 3, daysAgo(13, 9, 40), DocumentCategory.DRAWING),
+        Document(2, 1, "Riverside-Block-C-Method-Statement.docx", 2, daysAgo(27, 14, 5), DocumentCategory.SAFETY),
+        Document(3, 1, "Riverside-Health-and-Safety-File.pdf", 5, daysAgo(4, 8, 15), DocumentCategory.SAFETY),
+        Document(4, 2, "HarbourView-Geotechnical-Report.pdf", 1, daysAgo(102, 11, 30), DocumentCategory.REPORT),
+        Document(5, 2, "HarbourView-Waterproofing-Specification.pdf", 2, daysAgo(20, 16, 45), DocumentCategory.DRAWING),
+        Document(6, 3, "N3-Bridge-Environmental-Authorisation.pdf", 1, daysAgo(40, 10, 0), DocumentCategory.PERMIT),
+        Document(7, 1, "Site-Induction-Pack.pdf", 4, daysAgo(114, 7, 30), DocumentCategory.SAFETY),
+        Document(8, 1, "Riverside-Main-Contract-Signed.pdf", 1, daysAgo(262, 15, 0), DocumentCategory.CONTRACT),
+        Document(9, 2, "HarbourView-Building-Plan-Approval.pdf", 1, daysAgo(210, 9, 10), DocumentCategory.PERMIT),
+        Document(10, 2, "HarbourView-Level-3-Slab-Drawings-RevB.dwg", 2, daysAgo(9, 13, 20), DocumentCategory.DRAWING)
     )
 
     // -----------------------------------------------------------------------

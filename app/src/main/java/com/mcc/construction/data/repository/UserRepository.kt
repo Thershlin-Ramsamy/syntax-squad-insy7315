@@ -16,6 +16,9 @@ interface UserRepository {
 
     fun observeRoles(): Flow<List<Role>>
 
-    /** Mirrors the class diagram's `Role.assignRole(userID, roleID)`. */
+    /** Mirrors the class diagram's `Role.assignRole(userID, roleID)`. Recorded in the audit log. */
     suspend fun assignRole(userId: Int, role: UserRole)
+
+    /** Suspends ([active] false) or restores an account. Recorded in the audit log. */
+    suspend fun setActive(userId: Int, active: Boolean)
 }

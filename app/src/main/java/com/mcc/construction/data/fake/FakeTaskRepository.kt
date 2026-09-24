@@ -5,6 +5,8 @@ import com.mcc.construction.data.model.Task
 import com.mcc.construction.data.model.TaskAssignment
 import com.mcc.construction.data.model.TaskPhoto
 import com.mcc.construction.data.model.TaskStatus
+import com.mcc.construction.data.model.NotificationType
+import com.mcc.construction.data.repository.TaskDraft
 import com.mcc.construction.data.repository.TaskRepository
 import java.time.Clock
 import java.time.LocalDateTime
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.update
 class FakeTaskRepository(
     seed: FakeSeedData,
     private val sync: FakeSyncRepository,
+    private val notifier: FakeNotifier,
     private val clock: Clock
 ) : TaskRepository {
 
@@ -26,6 +29,7 @@ class FakeTaskRepository(
     private val nextAssignmentId = AtomicInteger(seed.assignments.maxOf { it.assignmentId } + 1)
     private val photos = MutableStateFlow<List<TaskPhoto>>(emptyList())
     private val nextPhotoId = AtomicInteger(1)
+    private val nextTaskId = AtomicInteger(seed.tasks.maxOf { it.taskId } + 1)
 
     override fun observeTasks(): Flow<List<Task>> = tasks
 
@@ -44,19 +48,40 @@ class FakeTaskRepository(
     override fun observeAssignments(taskId: Int): Flow<List<TaskAssignment>> =
         assignments.map { list -> list.filter { it.taskId == taskId } }
 
+    override fun observeAllAssignments(): Flow<List<TaskAssignment>> = assignments
+
+    override suspend fun createTask(draft: TaskDraft): Task {
+        val task = Task(
+            taskId = nextTaskId.getAndIncrement(),
+            projectId = draft.projectId,
+            title = draft.title,
+            description = draft.description,
+            deadline = draft.deadline,
+            priority = draft.priority,
+            status = TaskStatus.PENDING
+        )
+        tasks.update { it + task }
+        sync.recordChange(PendingChangeType.TASK_UPDATE, task.title)
+        return task
+    }
+
     override suspend fun updateStatus(taskId: Int, status: TaskStatus) {
-        var title: String? = null
-        tasks.update { list ->
-            list.map { task ->
-                if (task.taskId == taskId) {
-                    title = task.title
-                    task.copy(status = status)
-                } else {
-                    task
-                }
-            }
+        val task = tasks.value.firstOrNull { it.taskId == taskId } ?: return
+        if (task.status == status) return
+        tasks.update { list -> list.map { if (it.taskId == taskId) it.copy(status = status) else it } }
+        sync.recordChange(PendingChangeType.TASK_UPDATE, task.title)
+
+        val verb = when (status) {
+            TaskStatus.IN_PROGRESS -> "started"
+            TaskStatus.COMPLETED -> "completed"
+            TaskStatus.BLOCKED -> "marked as blocked"
+            TaskStatus.PENDING -> "moved back to pending"
         }
-        title?.let { sync.recordChange(PendingChangeType.TASK_UPDATE, it) }
+        notifier.notifyProjectManager(
+            task.projectId,
+            NotificationType.TASK,
+            "${notifier.actorName()} $verb “${task.title}”."
+        )
     }
 
     override suspend fun assignTask(taskId: Int, userId: Int): TaskAssignment {
@@ -70,6 +95,9 @@ class FakeTaskRepository(
             assignedDate = LocalDateTime.now(clock)
         )
         assignments.update { it + assignment }
+        tasks.value.firstOrNull { it.taskId == taskId }?.let { task ->
+            notifier.notify(userId, NotificationType.TASK, "${notifier.actorName()} assigned you “${task.title}”.")
+        }
         return assignment
     }
 

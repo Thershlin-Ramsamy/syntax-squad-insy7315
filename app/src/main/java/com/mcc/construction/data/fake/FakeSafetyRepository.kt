@@ -1,6 +1,7 @@
 package com.mcc.construction.data.fake
 
 import com.mcc.construction.data.model.IncidentReport
+import com.mcc.construction.data.model.NotificationType
 import com.mcc.construction.data.model.PendingChangeType
 import com.mcc.construction.data.model.SafetyChecklistItem
 import com.mcc.construction.data.model.SafetyInspection
@@ -20,6 +21,7 @@ class FakeSafetyRepository(
     seed: FakeSeedData,
     private val projects: FakeProjectRepository,
     private val sync: FakeSyncRepository,
+    private val notifier: FakeNotifier,
     private val clock: Clock
 ) : SafetyRepository {
 
@@ -62,6 +64,13 @@ class FakeSafetyRepository(
         comments: String
     ): SafetyInspection {
         val inspection = recordInspection(projectId, inspectorId, passed, comments)
+        if (!passed) {
+            notifier.notifyProjectManager(
+                projectId,
+                NotificationType.SAFETY,
+                "${notifier.nameOf(inspectorId)}'s safety checklist failed at ${notifier.projectName(projectId)}."
+            )
+        }
         sync.recordChange(
             PendingChangeType.SAFETY_INSPECTION,
             projects.findProject(projectId)?.projectName.orEmpty()
@@ -89,6 +98,12 @@ class FakeSafetyRepository(
         )
         incidents.update { it + incident }
         sync.recordChange(PendingChangeType.INCIDENT_REPORT, draft.description.take(SUMMARY_LENGTH))
+        notifier.notifyProjectManager(
+            draft.projectId,
+            NotificationType.SAFETY,
+            "${notifier.nameOf(draft.reportedBy)} reported a level ${draft.severity.level} incident at " +
+                "${notifier.projectName(draft.projectId)}."
+        )
         return incident
     }
 
