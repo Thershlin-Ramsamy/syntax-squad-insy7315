@@ -44,7 +44,7 @@ fun AppTopBar(
         },
         actions = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SyncStatusChip()
+                SyncStatusIndicator()
                 IconButton(onClick = onNotifications) {
                     Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
                 }

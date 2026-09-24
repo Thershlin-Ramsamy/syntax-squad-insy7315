@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsNone
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,7 +21,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mcc.construction.ui.preview.PreviewSurface
 import com.mcc.construction.ui.theme.Spacing
 import com.mcc.construction.ui.theme.Tone
 import com.mcc.construction.ui.theme.colors
@@ -81,5 +85,19 @@ fun EmptyState(
             Spacer(Modifier.height(Spacing.xl))
             SecondaryButton(text = actionLabel, onClick = onAction)
         }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun EmptyStatePreview() {
+    PreviewSurface {
+        EmptyState(
+            icon = Icons.Filled.NotificationsNone,
+            title = "You're all caught up",
+            message = "Task assignments and safety notices will appear here.",
+            actionLabel = "Refresh",
+            onAction = {}
+        )
     }
 }

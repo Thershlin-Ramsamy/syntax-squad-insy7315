@@ -4,13 +4,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.mcc.construction.MccApplication
 import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.AppTopBar
+import com.mcc.construction.ui.components.LocalSyncIndicatorState
+import com.mcc.construction.ui.components.SyncIndicatorState
 
 /**
  * Single NavHost and back stack for the whole app.
@@ -29,33 +35,39 @@ fun AppRoot(widthSizeClass: WindowWidthSizeClass) {
 
     val showChrome = currentRoute != null && currentRoute in NavMenus.chromeRoutes
 
-    if (showChrome) {
-        AdaptiveAppScaffold(
-            widthSizeClass = widthSizeClass,
-            role = role,
-            currentRoute = currentRoute,
-            onNavItemSelected = { route ->
-                navController.navigate(route) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
+    val container = (LocalContext.current.applicationContext as MccApplication).container
+    val syncStatus by container.syncRepository.status.collectAsStateWithLifecycle()
+    val syncIndicator = SyncIndicatorState(syncStatus) { navController.navigate(Routes.SYNC_STATUS) }
+
+    CompositionLocalProvider(LocalSyncIndicatorState provides syncIndicator) {
+        if (showChrome) {
+            AdaptiveAppScaffold(
+                widthSizeClass = widthSizeClass,
+                role = role,
+                currentRoute = currentRoute,
+                onNavItemSelected = { route ->
+                    navController.navigate(route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                topBar = {
+                    AppTopBar(
+                        currentRoute = currentRoute,
+                        onNotifications = { navController.navigate(Routes.NOTIFICATIONS) }
+                    )
                 }
-            },
-            topBar = {
-                AppTopBar(
-                    currentRoute = currentRoute,
-                    onNotifications = { navController.navigate(Routes.NOTIFICATIONS) }
+            ) { padding ->
+                AppNavHost(
+                    navController = navController,
+                    modifier = Modifier
+                        .padding(padding)
+                        .fillMaxSize()
                 )
             }
-        ) { padding ->
-            AppNavHost(
-                navController = navController,
-                modifier = Modifier
-                    .padding(padding)
-                    .fillMaxSize()
-            )
+        } else {
+            AppNavHost(navController = navController, modifier = Modifier.fillMaxSize())
         }
-    } else {
-        AppNavHost(navController = navController, modifier = Modifier.fillMaxSize())
     }
 }

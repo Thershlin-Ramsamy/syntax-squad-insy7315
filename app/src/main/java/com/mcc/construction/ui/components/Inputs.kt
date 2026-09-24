@@ -17,9 +17,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -32,12 +36,18 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mcc.construction.ui.preview.PreviewSurface
 import com.mcc.construction.ui.theme.Spacing
 
 /**
- * Primary action. Navy, full width, [Spacing.minTouch] tall — sized for gloved
- * hands, per the project design notes.
+ * The primary action button. Navy, full width, [Spacing.minTouch] tall — sized
+ * for gloved hands, per the project design notes.
+ *
+ * While [loading] is true a spinner replaces the icon and taps are ignored, but
+ * the button keeps its colour: greying it out mid-request reads as "you can't
+ * do this" rather than "working on it".
  */
 @Composable
 fun PrimaryButton(
@@ -45,17 +55,25 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
     Button(
-        onClick = onClick,
+        onClick = { if (!loading) onClick() },
         enabled = enabled,
         shape = MaterialTheme.shapes.large,
         modifier = modifier
             .fillMaxWidth()
             .height(Spacing.minTouch)
     ) {
-        if (icon != null) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = LocalContentColor.current,
+                strokeWidth = 2.dp
+            )
+            Spacer(Modifier.width(Spacing.md))
+        } else if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(Spacing.sm))
         }
@@ -223,6 +241,22 @@ fun SegmentedFilter(
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun ButtonsPreview() {
+    PreviewSurface {
+        Column(
+            modifier = Modifier.padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+        ) {
+            PrimaryButton(text = "Sign in", onClick = {}, icon = Icons.AutoMirrored.Filled.Login)
+            PrimaryButton(text = "Signing in…", onClick = {}, loading = true)
+            AccentButton(text = "Clock in", onClick = {})
+            SecondaryButton(text = "Simulate going offline", onClick = {})
         }
     }
 }
