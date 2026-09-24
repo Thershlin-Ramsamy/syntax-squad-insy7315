@@ -21,23 +21,38 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mcc.construction.R
-import com.mcc.construction.navigation.Routes
+import com.mcc.construction.ui.preview.DevicePreviews
+import com.mcc.construction.ui.preview.PreviewSurface
 import com.mcc.construction.ui.theme.BrandWhite
 import com.mcc.construction.ui.theme.ConstructionGold
 import com.mcc.construction.ui.theme.Ink500
 import com.mcc.construction.ui.theme.NavyBlue
 import com.mcc.construction.ui.theme.Spacing
-import kotlinx.coroutines.delay
+
+/** Splash wired to its ViewModel; hands over once the ViewModel picks a destination. */
+@Composable
+fun SplashRoute(
+    onFinished: (SplashDestination) -> Unit,
+    viewModel: SplashViewModel = viewModel(factory = SplashViewModel.Factory)
+) {
+    val destination by viewModel.destination.collectAsStateWithLifecycle()
+    LaunchedEffect(destination) {
+        destination?.let(onFinished)
+    }
+    SplashScreen()
+}
 
 /**
  * Full-bleed brand moment. A determinate progress bar rather than a spinner —
@@ -51,24 +66,17 @@ import kotlinx.coroutines.delay
  * brand outranks the system theme.
  */
 @Composable
-fun SplashScreen(navController: NavHostController) {
-    var started by remember { mutableStateOf(false) }
+fun SplashScreen(modifier: Modifier = Modifier) {
+    var started by rememberSaveable { mutableStateOf(false) }
     val progress by animateFloatAsState(
         targetValue = if (started) 1f else 0f,
-        animationSpec = tween(durationMillis = 1100),
+        animationSpec = tween(durationMillis = PROGRESS_MILLIS),
         label = "splashProgress"
     )
-
-    LaunchedEffect(Unit) {
-        started = true
-        delay(1400)
-        navController.navigate(Routes.LOGIN) {
-            popUpTo(Routes.SPLASH) { inclusive = true }
-        }
-    }
+    LaunchedEffect(Unit) { started = true }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(BrandWhite),
         contentAlignment = Alignment.Center
@@ -82,7 +90,7 @@ fun SplashScreen(navController: NavHostController) {
                 painter = painterResource(R.drawable.mcc_logo_full_lockup),
                 // The lockup already says "MCC Construction", so the app name is
                 // announced here and not repeated as a heading below.
-                contentDescription = "MCC Construction",
+                contentDescription = stringResource(R.string.app_name),
                 contentScale = ContentScale.Fit,
                 // widthIn must come before fillMaxWidth: fillMaxWidth fixes the
                 // width to whatever it is handed, so a cap placed after it never
@@ -93,7 +101,7 @@ fun SplashScreen(navController: NavHostController) {
             )
             Spacer(Modifier.height(Spacing.xxl))
             Text(
-                text = "Site Management System",
+                text = stringResource(R.string.app_tagline),
                 style = MaterialTheme.typography.bodyLarge,
                 color = Ink500,
                 textAlign = TextAlign.Center
@@ -109,4 +117,12 @@ fun SplashScreen(navController: NavHostController) {
             )
         }
     }
+}
+
+private const val PROGRESS_MILLIS = 1_100
+
+@DevicePreviews
+@Composable
+private fun SplashScreenPreview() {
+    PreviewSurface { SplashScreen() }
 }
