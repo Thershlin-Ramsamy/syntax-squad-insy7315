@@ -103,7 +103,7 @@ fun AppRoot(
                 navItems.forEach { item ->
                     item(
                         selected = currentRoute == item.route,
-                        onClick = { navController.navigateToTopLevel(item.route, role) },
+                        onClick = { navController.selectMenuItem(item.route, role) },
                         // The label below already names the item, so the icon
                         // is decorative for screen readers.
                         icon = { Icon(item.icon, contentDescription = null) },
@@ -131,7 +131,10 @@ fun AppRoot(
                                 navController.navigate(Routes.NOTIFICATIONS) { launchSingleTop = true }
                             },
                             onBack = if (canGoBack) ({ navController.popBackStack() }) else null,
-                            onProfile = if (navItems.none { it.route == Routes.PROFILE }) {
+                            onProfile = if (
+                                currentRoute != Routes.PROFILE &&
+                                navItems.none { it.route == Routes.PROFILE }
+                            ) {
                                 { navController.navigate(Routes.PROFILE) { launchSingleTop = true } }
                             } else {
                                 null
@@ -144,6 +147,7 @@ fun AppRoot(
             ) { padding ->
                 AppNavHost(
                     navController = navController,
+                    role = role,
                     modifier = Modifier
                         .padding(padding)
                         .fillMaxSize()
@@ -177,6 +181,20 @@ private fun navigationItemColors(): NavigationSuiteItemColors {
             unselectedTextColor = scheme.onSurfaceVariant
         )
     )
+}
+
+/**
+ * Handles a tap on a bar or rail item. Tapping the section you are already in
+ * goes back to its top (Settings opened from Profile, then Profile tapped,
+ * returns to Profile); tapping another section switches to it.
+ */
+private fun NavHostController.selectMenuItem(route: String, role: UserRole?) {
+    val inCurrentSection = currentBackStack.value.any { it.destination.route == route }
+    if (inCurrentSection) {
+        popBackStack(route, inclusive = false)
+    } else {
+        navigateToTopLevel(route, role)
+    }
 }
 
 /**

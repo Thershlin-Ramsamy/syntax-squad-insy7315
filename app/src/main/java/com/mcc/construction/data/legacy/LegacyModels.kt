@@ -237,21 +237,6 @@ data class DocumentItem(
 )
 
 // ---------------------------------------------------------------------------
-// Notifications
-// ---------------------------------------------------------------------------
-
-enum class NotificationKind { TASK, SAFETY, MESSAGE, SYSTEM, INVENTORY }
-
-data class AppNotification(
-    val id: String,
-    val kind: NotificationKind,
-    val title: String,
-    val body: String,
-    val timestamp: String,
-    val read: Boolean
-)
-
-// ---------------------------------------------------------------------------
 // Administration
 // ---------------------------------------------------------------------------
 
@@ -280,15 +265,4 @@ data class AuditEntry(
     val timestamp: String,
     val severity: AuditSeverity,
     val ipAddress: String
-)
-
-// ---------------------------------------------------------------------------
-// Sync
-// ---------------------------------------------------------------------------
-
-data class SyncItem(
-    val id: String,
-    val label: String,
-    val detail: String,
-    val queuedAt: String
 )

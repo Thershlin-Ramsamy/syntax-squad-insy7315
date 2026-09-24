@@ -1,6 +1,5 @@
 package com.mcc.construction.data.legacy
 
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import com.mcc.construction.data.model.UserRole
@@ -30,26 +29,21 @@ object MockRepository {
     // -----------------------------------------------------------------------
 
     /**
-     * Signed-in role. Login writes this and the navigation shell reads it to pick
-     * a menu, which is how one build demonstrates all three roles without real
-     * authentication.
+     * Mirror of the signed-in role from the AuthRepository, kept in step by the
+     * app root so legacy screens show the right user.
      */
     val currentRole = mutableStateOf(UserRole.WORKER)
 
+    /**
+     * Mirror of the SyncRepository's online state, kept in step by the app
+     * root. Read-only for screens: offline mode is switched in Settings or on
+     * the Offline & sync screen.
+     */
     val isOnline = mutableStateOf(true)
-    val pendingSyncCount = mutableIntStateOf(2)
     val isClockedIn = mutableStateOf(false)
-
-    fun toggleOnline() {
-        isOnline.value = !isOnline.value
-    }
 
     fun toggleClockedIn() {
         isClockedIn.value = !isClockedIn.value
-    }
-
-    fun syncNow() {
-        if (isOnline.value) pendingSyncCount.intValue = 0
     }
 
     private val profiles = mapOf(
@@ -444,18 +438,6 @@ object MockRepository {
     )
 
     // -----------------------------------------------------------------------
-    // Notifications
-    // -----------------------------------------------------------------------
-
-    val notifications = listOf(
-        AppNotification("N-01", NotificationKind.TASK, "Task assigned", "Johan Botha assigned you \"Electrical conduit rough-in\".", "12 min ago", false),
-        AppNotification("N-02", NotificationKind.SAFETY, "Safety checklist due", "Your daily safety checklist has not been submitted yet.", "1 hr ago", false),
-        AppNotification("N-03", NotificationKind.MESSAGE, "New message", "Johan Botha: Confirm the rebar spacing before you pour.", "2 hr ago", true),
-        AppNotification("N-04", NotificationKind.INVENTORY, "Stock alert", "Waterproofing Membrane is out of stock at Harbour View.", "Yesterday", true),
-        AppNotification("N-05", NotificationKind.SYSTEM, "Sync complete", "4 queued items were uploaded successfully.", "Yesterday", true)
-    )
-
-    // -----------------------------------------------------------------------
     // Administration
     // -----------------------------------------------------------------------
 
@@ -491,14 +473,5 @@ object MockRepository {
         AuditEntry("A-04", "Riaan van Wyk", "Suspended account", "Pieter Coetzee", "22 Jul 2026, 09:15", AuditSeverity.WARNING, "10.4.2.18"),
         AuditEntry("A-05", "Johan Botha", "Exported employee data", "34 records — Riverside Estate", "21 Jul 2026, 14:48", AuditSeverity.WARNING, "10.4.2.77"),
         AuditEntry("A-06", "System", "Backup completed", "Nightly snapshot", "21 Jul 2026, 02:00", AuditSeverity.INFO, "—")
-    )
-
-    // -----------------------------------------------------------------------
-    // Sync queue
-    // -----------------------------------------------------------------------
-
-    val syncQueue = listOf(
-        SyncItem("Q-01", "Daily report — 13 Aug", "Waiting for connection", "17:04"),
-        SyncItem("Q-02", "Safety checklist — Block C", "Waiting for connection", "07:36")
     )
 }

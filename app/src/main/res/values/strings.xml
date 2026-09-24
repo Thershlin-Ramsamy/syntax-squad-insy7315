@@ -107,6 +107,79 @@
     <string name="forgot_back_to_sign_in">Back to sign in</string>
     <string name="forgot_try_another">Use a different email</string>
 
+    <!-- Profile -->
+    <string name="profile_employee_number">Employee no.</string>
+    <string name="profile_email">Email</string>
+    <string name="profile_phone">Phone</string>
+    <string name="profile_more">More</string>
+    <string name="profile_all_read">All caught up</string>
+    <plurals name="profile_unread">
+        <item quantity="one">%d unread</item>
+        <item quantity="other">%d unread</item>
+    </plurals>
+    <string name="profile_everything_uploaded">Everything uploaded</string>
+    <plurals name="profile_pending_uploads">
+        <item quantity="one">%d change waiting to upload</item>
+        <item quantity="other">%d changes waiting to upload</item>
+    </plurals>
+    <string name="profile_sign_out">Sign out</string>
+    <string name="profile_sign_out_title">Sign out?</string>
+    <string name="profile_sign_out_message">You\'ll need your email and password to sign back in.</string>
+    <plurals name="profile_sign_out_pending">
+        <item quantity="one">%d change hasn\'t uploaded yet. It stays saved on this device and uploads the next time you sign in and sync.</item>
+        <item quantity="other">%d changes haven\'t uploaded yet. They stay saved on this device and upload the next time you sign in and sync.</item>
+    </plurals>
+
+    <!-- Settings -->
+    <string name="settings_section_notifications">Notifications</string>
+    <string name="settings_notifications">Push notifications</string>
+    <string name="settings_notifications_subtitle">Task assignments, safety notices and messages</string>
+    <string name="settings_vibrate">Vibrate</string>
+    <string name="settings_vibrate_subtitle">Useful when ear protection is worn</string>
+    <string name="settings_section_data">Data &amp; sync</string>
+    <string name="settings_offline_mode">Offline mode</string>
+    <string name="settings_offline_mode_subtitle">Keep working without a connection. Changes are saved on the device and upload when you switch this off.</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_app_version">App version</string>
+    <string name="settings_signed_in_as">Signed in as</string>
+    <string name="settings_data_source">Data source</string>
+    <string name="settings_data_source_demo">Demo data on this device</string>
+    <string name="settings_data_source_server">MCC server</string>
+
+    <!-- Offline & sync -->
+    <string name="sync_online">Online</string>
+    <string name="sync_chip_up_to_date">Up to date</string>
+    <string name="sync_last_synced">Last synced</string>
+    <string name="sync_never">Never</string>
+    <string name="sync_waiting_to_upload">Waiting to upload</string>
+    <string name="sync_now">Sync now</string>
+    <string name="sync_now_running">Syncing…</string>
+    <string name="sync_up_to_date">Everything is up to date</string>
+    <string name="sync_done_title">Sync complete</string>
+    <plurals name="sync_done_message">
+        <item quantity="one">%d change uploaded to the site office.</item>
+        <item quantity="other">%d changes uploaded to the site office.</item>
+    </plurals>
+    <string name="sync_offline_banner_title">Working offline</string>
+    <string name="sync_offline_banner_message">Carry on as normal. Reports, checklists and clock-ins are saved on this device and upload when the connection is back.</string>
+    <string name="sync_offline_mode_subtitle">Hold uploads and work from the device, as if out of signal.</string>
+    <string name="sync_queue_title">Waiting to upload</string>
+    <string name="sync_queue_empty_title">Nothing waiting</string>
+    <string name="sync_queue_empty_message">Every report and checklist has reached the site office.</string>
+    <string name="sync_queued_at">Saved %1$s</string>
+    <string name="sync_history_title">Recent syncs</string>
+
+    <!-- Notifications -->
+    <string name="notifications_filter_all">All</string>
+    <string name="notifications_filter_unread">Unread (%1$d)</string>
+    <string name="notifications_mark_all_read">Mark all read</string>
+    <string name="notifications_mark_read">Mark as read</string>
+    <string name="notifications_unread">Unread</string>
+    <string name="notifications_empty_title">No notifications yet</string>
+    <string name="notifications_empty_message">Task assignments, safety notices and messages will appear here.</string>
+    <string name="notifications_caught_up_title">You\'re all caught up</string>
+    <string name="notifications_caught_up_message">Nothing unread. Switch to All to see earlier notifications.</string>
+
     <!-- Roles -->
     <string name="role_worker">Worker</string>
     <string name="role_manager">Manager</string>

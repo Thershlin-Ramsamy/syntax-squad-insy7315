@@ -9,6 +9,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.mcc.construction.R
+import com.mcc.construction.data.model.NotificationType
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.components.PlaceholderScreen
 import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
 import com.mcc.construction.ui.screens.admin.AuditLogScreen
@@ -24,15 +26,16 @@ import com.mcc.construction.ui.screens.login.ForgotPasswordRoute
 import com.mcc.construction.ui.screens.login.LoginRoute
 import com.mcc.construction.ui.screens.messages.ChatScreen
 import com.mcc.construction.ui.screens.messages.MessagesScreen
-import com.mcc.construction.ui.screens.notifications.NotificationsScreen
-import com.mcc.construction.ui.screens.profile.ProfileScreen
+import com.mcc.construction.ui.screens.notifications.NotificationsRoute
+import com.mcc.construction.ui.screens.profile.ProfileRoute
+import com.mcc.construction.ui.screens.profile.ProfileShortcut
 import com.mcc.construction.ui.screens.projects.ProjectDetailScreen
 import com.mcc.construction.ui.screens.projects.ProjectListScreen
 import com.mcc.construction.ui.screens.reports.ReportsScreen
-import com.mcc.construction.ui.screens.settings.SettingsScreen
+import com.mcc.construction.ui.screens.settings.SettingsRoute
 import com.mcc.construction.ui.screens.splash.SplashDestination
 import com.mcc.construction.ui.screens.splash.SplashRoute
-import com.mcc.construction.ui.screens.sync.SyncStatusScreen
+import com.mcc.construction.ui.screens.sync.SyncStatusRoute
 import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
 import com.mcc.construction.ui.screens.tasks.TaskListScreen
 import com.mcc.construction.ui.screens.worker.AttendanceScreen
@@ -50,7 +53,11 @@ import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
  * but no content yet uses [PlaceholderScreen].
  */
 @Composable
-fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+fun AppNavHost(
+    navController: NavHostController,
+    role: UserRole?,
+    modifier: Modifier = Modifier
+) {
     NavHost(
         navController = navController,
         startDestination = Routes.SPLASH,
@@ -85,10 +92,23 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         }
 
         // --- Shared --------------------------------------------------------
-        composable(Routes.NOTIFICATIONS) { NotificationsScreen(navController) }
-        composable(Routes.PROFILE) { ProfileScreen(navController) }
-        composable(Routes.SETTINGS) { SettingsScreen(navController) }
-        composable(Routes.SYNC_STATUS) { SyncStatusScreen(navController) }
+        composable(Routes.NOTIFICATIONS) {
+            NotificationsRoute(
+                onOpen = { type -> navController.navigate(notificationRoute(type, role)) }
+            )
+        }
+        composable(Routes.PROFILE) {
+            ProfileRoute(
+                onShortcut = { shortcut -> navController.navigate(shortcut.route) },
+                onSignedOut = { navController.navigateToSignIn() }
+            )
+        }
+        composable(Routes.SETTINGS) {
+            SettingsRoute(onOpenSyncStatus = { navController.navigate(Routes.SYNC_STATUS) })
+        }
+        composable(Routes.SYNC_STATUS) {
+            SyncStatusRoute(onBack = { navController.popBackStack() })
+        }
         composable(Routes.DOCUMENTS) { DocumentsScreen(navController) }
 
         // --- Worker --------------------------------------------------------
@@ -167,3 +187,28 @@ fun AppNavHost(navController: NavHostController, modifier: Modifier = Modifier) 
         }
     }
 }
+
+/** Where opening a notification of [type] leads, for the signed-in [role]. */
+private fun notificationRoute(type: NotificationType, role: UserRole?): String = when (type) {
+    NotificationType.TASK -> Routes.TASKS
+    NotificationType.SAFETY -> Routes.SAFETY_CHECKLIST
+    NotificationType.MESSAGE -> Routes.MESSAGES
+    NotificationType.INVENTORY -> Routes.INVENTORY
+    NotificationType.REPORT -> if (role == UserRole.WORKER) Routes.DAILY_REPORT else Routes.REPORTS
+    NotificationType.SYSTEM -> Routes.SYNC_STATUS
+}
+
+private val ProfileShortcut.route: String
+    get() = when (this) {
+        ProfileShortcut.ATTENDANCE -> Routes.ATTENDANCE
+        ProfileShortcut.DAILY_REPORT -> Routes.DAILY_REPORT
+        ProfileShortcut.SAFETY_CHECKLIST -> Routes.SAFETY_CHECKLIST
+        ProfileShortcut.TASKS -> Routes.TASKS
+        ProfileShortcut.EMPLOYEES -> Routes.EMPLOYEES
+        ProfileShortcut.REPORTS -> Routes.REPORTS
+        ProfileShortcut.SYSTEM_SETTINGS -> Routes.SYSTEM_SETTINGS
+        ProfileShortcut.DOCUMENTS -> Routes.DOCUMENTS
+        ProfileShortcut.NOTIFICATIONS -> Routes.NOTIFICATIONS
+        ProfileShortcut.SYNC -> Routes.SYNC_STATUS
+        ProfileShortcut.SETTINGS -> Routes.SETTINGS
+    }
