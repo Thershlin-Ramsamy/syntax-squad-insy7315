@@ -38,7 +38,7 @@ import com.mcc.construction.ui.screens.splash.SplashDestination
 import com.mcc.construction.ui.screens.splash.SplashRoute
 import com.mcc.construction.ui.screens.sync.SyncStatusRoute
 import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
-import com.mcc.construction.ui.screens.tasks.TaskListScreen
+import com.mcc.construction.ui.screens.tasks.TaskListRoute
 import com.mcc.construction.ui.screens.worker.AttendanceScreen
 import com.mcc.construction.ui.screens.worker.DailyReportScreen
 import com.mcc.construction.ui.screens.worker.IncidentReportScreen
@@ -119,7 +119,11 @@ fun AppNavHost(
                 onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) }
             )
         }
-        composable(Routes.TASKS) { TaskListScreen(navController) }
+        composable(Routes.TASKS) {
+            TaskListRoute(
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) }
+            )
+        }
         composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
         composable(Routes.DAILY_REPORT) { DailyReportScreen(navController) }
         composable(Routes.SAFETY_CHECKLIST) { SafetyChecklistScreen(navController) }

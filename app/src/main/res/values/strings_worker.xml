@@ -61,4 +61,19 @@
     <string name="dashboard_view_all">View all</string>
     <string name="dashboard_all_done_title">Nothing left for today</string>
     <string name="dashboard_all_done_message">Every task due today is done. Check with your foreman for the next job.</string>
+
+    <!-- Task list -->
+    <string name="tasks_filter_all">All (%1$d)</string>
+    <string name="tasks_filter_pending">Pending (%1$d)</string>
+    <string name="tasks_filter_in_progress">In progress (%1$d)</string>
+    <string name="tasks_filter_completed">Completed (%1$d)</string>
+    <string name="tasks_section_now">Today</string>
+    <string name="tasks_section_coming_up">Coming up</string>
+    <string name="tasks_showing_all">Showing every task across your projects.</string>
+    <string name="tasks_empty_title">No tasks assigned</string>
+    <string name="tasks_empty_message">When your foreman assigns you work it appears here.</string>
+    <string name="tasks_filter_empty_title">Nothing here</string>
+    <string name="tasks_filter_empty_message">No tasks with this status. Try another filter.</string>
+    <string name="tasks_pick_title">Pick a task</string>
+    <string name="tasks_pick_message">Choose a task on the left to see its details.</string>
 </resources>
