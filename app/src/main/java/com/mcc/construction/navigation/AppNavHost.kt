@@ -42,7 +42,7 @@ import com.mcc.construction.ui.screens.tasks.TaskListRoute
 import com.mcc.construction.ui.screens.worker.AttendanceRoute
 import com.mcc.construction.ui.screens.worker.DailyReportRoute
 import com.mcc.construction.ui.screens.worker.IncidentReportScreen
-import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
+import com.mcc.construction.ui.screens.worker.SafetyChecklistRoute
 
 /**
  * The navigation graph: one entry per screen.
@@ -129,8 +129,21 @@ fun AppNavHost(
         }
         composable(Routes.ATTENDANCE) { AttendanceRoute() }
         composable(Routes.DAILY_REPORT) { DailyReportRoute(onDone = { navController.popBackStack() }) }
-        composable(Routes.SAFETY_CHECKLIST) { SafetyChecklistScreen(navController) }
-        composable(Routes.INCIDENT_REPORT) { IncidentReportScreen(navController) }
+        composable(Routes.SAFETY_CHECKLIST) {
+            SafetyChecklistRoute(
+                onReportIncident = { inspectionId -> navController.navigate(Routes.incidentReport(inspectionId)) },
+                onDone = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Routes.INCIDENT_REPORT_PATTERN,
+            arguments = listOf(
+                navArgument(Routes.ARG_INSPECTION_ID) {
+                    type = NavType.IntType
+                    defaultValue = NO_INSPECTION
+                }
+            )
+        ) { IncidentReportScreen(navController) }
         composable(Routes.MESSAGES) { MessagesScreen(navController) }
 
         // --- Manager -------------------------------------------------------
@@ -242,3 +255,6 @@ private val WorkerDestination.route: String
  */
 private fun taskIdFrom(argument: String?): Int =
     argument.orEmpty().filter(Char::isDigit).toIntOrNull() ?: -1
+
+/** The inspection argument's value when an incident is reported on its own. */
+private const val NO_INSPECTION = -1

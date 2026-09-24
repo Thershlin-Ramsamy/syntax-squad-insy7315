@@ -158,4 +158,29 @@
     <string name="report_write_another">Write another report</string>
     <string name="report_already_sent_title">Already reported today</string>
     <string name="report_already_sent_message">You sent a report for this project today. Submitting again adds a second report.</string>
+
+    <!-- Safety checklist -->
+    <string name="checklist_site">Site</string>
+    <string name="checklist_progress">%1$d of %2$d checked</string>
+    <string name="checklist_result_pass">All clear</string>
+    <string name="checklist_result_fail">Problem found</string>
+    <string name="checklist_result_incomplete">In progress</string>
+    <string name="checklist_items">Checks</string>
+    <string name="checklist_item_title">%1$d. %2$s</string>
+    <string name="checklist_yes">Yes</string>
+    <string name="checklist_no">No</string>
+    <string name="checklist_notes">Notes (optional)</string>
+    <string name="checklist_notes_placeholder">Anything the safety officer should know</string>
+    <string name="checklist_answer_all">Answer every check to submit. Checks left: %1$d.</string>
+    <string name="checklist_submit">Submit checklist</string>
+    <string name="checklist_passed_title">Checklist passed</string>
+    <string name="checklist_passed_message">The site is clear to work. Your checklist has been recorded.</string>
+    <string name="checklist_failed_title">Checklist failed</string>
+    <string name="checklist_failed_message">These checks failed: %1$s. Do not start work in the affected area until it is made safe.</string>
+    <string name="checklist_saved_offline">Saved offline and will upload when you reconnect.</string>
+    <string name="checklist_report_incident">Report an incident</string>
+    <string name="checklist_start_again">Start a new checklist</string>
+    <string name="checklist_done_today_pass">You already passed a checklist today</string>
+    <string name="checklist_done_today_fail">Your checklist today found a problem</string>
+    <string name="checklist_done_today_message">You can run it again, for example after a problem is fixed.</string>
 </resources>

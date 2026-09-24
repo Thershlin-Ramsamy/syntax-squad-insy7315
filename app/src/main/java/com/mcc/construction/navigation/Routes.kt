@@ -53,17 +53,22 @@ object Routes {
     const val MATERIAL_DETAIL_PATTERN = "material_detail/{materialId}"
     const val CHAT_PATTERN = "chat/{conversationId}"
 
+    /** [INCIDENT_REPORT] with an optional link to the checklist that found the problem. */
+    const val INCIDENT_REPORT_PATTERN = "incident_report?inspectionId={inspectionId}"
+
     const val ARG_TASK_ID = "taskId"
     const val ARG_PROJECT_ID = "projectId"
     const val ARG_EMPLOYEE_ID = "employeeId"
     const val ARG_MATERIAL_ID = "materialId"
     const val ARG_CONVERSATION_ID = "conversationId"
+    const val ARG_INSPECTION_ID = "inspectionId"
 
     fun taskDetail(id: String) = "task_detail/$id"
     fun projectDetail(id: String) = "project_detail/$id"
     fun employeeProfile(id: String) = "employee_profile/$id"
     fun materialDetail(id: String) = "material_detail/$id"
     fun chat(id: String) = "chat/$id"
+    fun incidentReport(inspectionId: Int) = "incident_report?inspectionId=$inspectionId"
 
     /** Routes that can be shown without a signed-in user. */
     val public: Set<String> = setOf(SPLASH, LOGIN, FORGOT_PASSWORD)
