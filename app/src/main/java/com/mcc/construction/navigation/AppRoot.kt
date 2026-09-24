@@ -189,7 +189,8 @@ private fun navigationItemColors(): NavigationSuiteItemColors {
  * returns to Profile); tapping another section switches to it.
  */
 private fun NavHostController.selectMenuItem(route: String, role: UserRole?) {
-    val inCurrentSection = currentBackStack.value.any { it.destination.route == route }
+    // getBackStackEntry throws when the route is not on the back stack.
+    val inCurrentSection = runCatching { getBackStackEntry(route) }.isSuccess
     if (inCurrentSection) {
         popBackStack(route, inclusive = false)
     } else {
