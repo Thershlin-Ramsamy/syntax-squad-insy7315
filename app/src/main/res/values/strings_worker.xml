@@ -183,4 +183,28 @@
     <string name="checklist_done_today_pass">You already passed a checklist today</string>
     <string name="checklist_done_today_fail">Your checklist today found a problem</string>
     <string name="checklist_done_today_message">You can run it again, for example after a problem is fixed.</string>
+
+    <!-- Incident report -->
+    <string name="incident_title">Report an incident</string>
+    <string name="incident_linked_title">Linked to your safety checklist</string>
+    <string name="incident_linked_message">This report is attached to the checklist for %1$s on %2$s.</string>
+    <string name="incident_severity">How serious was it?</string>
+    <string name="incident_severity_hint">1 is a near miss with no harm, 5 is critical.</string>
+    <string name="incident_urgent_title">Is anyone hurt or in danger?</string>
+    <string name="incident_urgent_message">Get help first: call the site first aider or emergency services on 112, then finish this report.</string>
+    <string name="incident_description">What happened?</string>
+    <string name="incident_description_placeholder">Where it happened, what you saw, who was involved</string>
+    <string name="incident_description_missing">Describe what happened.</string>
+    <string name="incident_quick_add">Tap to add</string>
+    <string name="incident_phrase_slip">Slip or trip</string>
+    <string name="incident_phrase_falling">Falling object</string>
+    <string name="incident_phrase_equipment">Equipment fault</string>
+    <string name="incident_phrase_injury">Someone was injured</string>
+    <string name="incident_phrase_no_injury">No one was hurt</string>
+    <string name="incident_photo">Photo (optional)</string>
+    <string name="incident_missing_message">Choose how serious it was and describe what happened.</string>
+    <string name="incident_submit">Submit incident report</string>
+    <string name="incident_sent_title">Incident reported</string>
+    <string name="incident_sent_message">Your %1$s incident has gone to the safety officer.</string>
+    <string name="incident_sent_offline_message">Your %1$s incident is saved on this device and will reach the safety officer when you are back online.</string>
 </resources>

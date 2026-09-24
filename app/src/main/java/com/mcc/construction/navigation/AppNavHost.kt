@@ -41,7 +41,7 @@ import com.mcc.construction.ui.screens.tasks.TaskDetailRoute
 import com.mcc.construction.ui.screens.tasks.TaskListRoute
 import com.mcc.construction.ui.screens.worker.AttendanceRoute
 import com.mcc.construction.ui.screens.worker.DailyReportRoute
-import com.mcc.construction.ui.screens.worker.IncidentReportScreen
+import com.mcc.construction.ui.screens.worker.IncidentReportRoute
 import com.mcc.construction.ui.screens.worker.SafetyChecklistRoute
 
 /**
@@ -143,7 +143,12 @@ fun AppNavHost(
                     defaultValue = NO_INSPECTION
                 }
             )
-        ) { IncidentReportScreen(navController) }
+        ) { entry ->
+            IncidentReportRoute(
+                inspectionId = entry.arguments?.getInt(Routes.ARG_INSPECTION_ID)?.takeIf { it != NO_INSPECTION },
+                onDone = { navController.popBackStack() }
+            )
+        }
         composable(Routes.MESSAGES) { MessagesScreen(navController) }
 
         // --- Manager -------------------------------------------------------
