@@ -39,7 +39,7 @@ import com.mcc.construction.ui.screens.splash.SplashRoute
 import com.mcc.construction.ui.screens.sync.SyncStatusRoute
 import com.mcc.construction.ui.screens.tasks.TaskDetailRoute
 import com.mcc.construction.ui.screens.tasks.TaskListRoute
-import com.mcc.construction.ui.screens.worker.AttendanceScreen
+import com.mcc.construction.ui.screens.worker.AttendanceRoute
 import com.mcc.construction.ui.screens.worker.DailyReportScreen
 import com.mcc.construction.ui.screens.worker.IncidentReportScreen
 import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
@@ -127,7 +127,7 @@ fun AppNavHost(
                 }
             )
         }
-        composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
+        composable(Routes.ATTENDANCE) { AttendanceRoute() }
         composable(Routes.DAILY_REPORT) { DailyReportScreen(navController) }
         composable(Routes.SAFETY_CHECKLIST) { SafetyChecklistScreen(navController) }
         composable(Routes.INCIDENT_REPORT) { IncidentReportScreen(navController) }

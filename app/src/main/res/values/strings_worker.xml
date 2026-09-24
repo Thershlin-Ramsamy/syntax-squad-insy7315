@@ -109,4 +109,19 @@
     <string name="task_read_only_message">You can read this task, but only the people on it can update it.</string>
     <string name="task_not_found_title">Task not found</string>
     <string name="task_not_found_message">It may have been removed or reassigned. Go back to your task list.</string>
+
+    <!-- Attendance -->
+    <string name="attendance_clock_in_hint">Tap the button when you arrive on site.</string>
+    <string name="attendance_clocked_in_offline">Clocked in at %1$s. Saved offline and will upload when you reconnect.</string>
+    <string name="attendance_clocked_out_offline">Clocked out at %1$s. %2$s hours worked. Saved offline and will upload when you reconnect.</string>
+    <string name="attendance_this_week">This week</string>
+    <string name="attendance_hours_value">%1$s h</string>
+    <string name="attendance_hours_worked">Hours worked</string>
+    <string name="attendance_shifts">Shifts</string>
+    <string name="attendance_recent">Recent shifts</string>
+    <string name="attendance_shift_times">%1$s to %2$s</string>
+    <string name="attendance_today">Today</string>
+    <string name="attendance_yesterday">Yesterday</string>
+    <string name="attendance_history_empty_title">No shifts yet</string>
+    <string name="attendance_history_empty_message">Finished shifts appear here after you clock out.</string>
 </resources>
