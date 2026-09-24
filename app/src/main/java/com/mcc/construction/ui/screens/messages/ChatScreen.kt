@@ -206,7 +206,9 @@ private fun Bubble(message: Message, fromMe: Boolean) {
             modifier = Modifier
                 .widthIn(max = BUBBLE_MAX_WIDTH)
                 .clip(shape)
-                .background(if (fromMe) scheme.primary else scheme.surfaceVariant)
+                // The raised container, not the card grey: in dark mode the card
+                // grey sits too close to the background to read as a bubble.
+                .background(if (fromMe) scheme.primary else scheme.surfaceContainerHigh)
                 .padding(horizontal = Spacing.lg, vertical = Spacing.md),
             horizontalAlignment = if (fromMe) Alignment.End else Alignment.Start
         ) {
