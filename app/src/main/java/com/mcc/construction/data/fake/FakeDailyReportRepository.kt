@@ -41,7 +41,8 @@ class FakeDailyReportRepository(
             weather = draft.weather,
             workCompleted = draft.workCompleted,
             problemsEncountered = draft.problemsEncountered,
-            status = ReportStatus.SUBMITTED
+            status = ReportStatus.SUBMITTED,
+            photoUris = draft.photoUris
         )
         reports.update { it + report }
         sync.recordChange(

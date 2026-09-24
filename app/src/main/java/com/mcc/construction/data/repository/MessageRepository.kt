@@ -14,4 +14,10 @@ interface MessageRepository {
 
     /** Queued for upload if the device is offline. */
     suspend fun sendMessage(senderId: Int, receiverId: Int, content: String): Message
+
+    /** Messages sent to [userId] that they have not opened yet, across all conversations. */
+    fun observeUnreadCount(userId: Int): Flow<Int>
+
+    /** Marks every message [otherUserId] sent to [userId] as read. */
+    suspend fun markThreadRead(userId: Int, otherUserId: Int)
 }

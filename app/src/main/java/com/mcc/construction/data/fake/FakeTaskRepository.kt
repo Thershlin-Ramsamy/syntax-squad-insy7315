@@ -3,6 +3,7 @@ package com.mcc.construction.data.fake
 import com.mcc.construction.data.model.PendingChangeType
 import com.mcc.construction.data.model.Task
 import com.mcc.construction.data.model.TaskAssignment
+import com.mcc.construction.data.model.TaskPhoto
 import com.mcc.construction.data.model.TaskStatus
 import com.mcc.construction.data.repository.TaskRepository
 import java.time.Clock
@@ -23,6 +24,8 @@ class FakeTaskRepository(
     private val tasks = MutableStateFlow(seed.tasks)
     private val assignments = MutableStateFlow(seed.assignments)
     private val nextAssignmentId = AtomicInteger(seed.assignments.maxOf { it.assignmentId } + 1)
+    private val photos = MutableStateFlow<List<TaskPhoto>>(emptyList())
+    private val nextPhotoId = AtomicInteger(1)
 
     override fun observeTasks(): Flow<List<Task>> = tasks
 
@@ -68,5 +71,27 @@ class FakeTaskRepository(
         )
         assignments.update { it + assignment }
         return assignment
+    }
+
+    override fun observeProofPhotos(taskId: Int): Flow<List<TaskPhoto>> =
+        photos.map { list -> list.filter { it.taskId == taskId } }
+
+    override suspend fun addProofPhoto(taskId: Int, userId: Int, uri: String): TaskPhoto {
+        val photo = TaskPhoto(
+            photoId = nextPhotoId.getAndIncrement(),
+            taskId = taskId,
+            userId = userId,
+            uri = uri,
+            addedAt = LocalDateTime.now(clock)
+        )
+        photos.update { it + photo }
+        tasks.value.firstOrNull { it.taskId == taskId }?.let {
+            sync.recordChange(PendingChangeType.TASK_UPDATE, it.title)
+        }
+        return photo
+    }
+
+    override suspend fun removeProofPhoto(photoId: Int) {
+        photos.update { list -> list.filterNot { it.photoId == photoId } }
     }
 }

@@ -2,6 +2,7 @@ package com.mcc.construction.data.repository
 
 import com.mcc.construction.data.model.Task
 import com.mcc.construction.data.model.TaskAssignment
+import com.mcc.construction.data.model.TaskPhoto
 import com.mcc.construction.data.model.TaskStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -24,4 +25,12 @@ interface TaskRepository {
 
     /** Mirrors the class diagram's `Manager.assignTask()`. */
     suspend fun assignTask(taskId: Int, userId: Int): TaskAssignment
+
+    /** Proof-of-work photos for [taskId], oldest first. */
+    fun observeProofPhotos(taskId: Int): Flow<List<TaskPhoto>>
+
+    /** Mirrors the class diagram's `Task.uploadImage()`. Queued if the device is offline. */
+    suspend fun addProofPhoto(taskId: Int, userId: Int, uri: String): TaskPhoto
+
+    suspend fun removeProofPhoto(photoId: Int)
 }

@@ -393,14 +393,14 @@ class FakeSeedData(clock: Clock) {
     val messages = listOf(
         Message(1, 3, 5, "Morning Sipho — are you on site yet?", minutesAgo(134)),
         Message(2, 5, 3, "Morning. Yes, on my way to Block C now.", minutesAgo(131)),
-        Message(3, 3, 5, "Good. The Unit 4 pour is going ahead today.", minutesAgo(125)),
-        Message(4, 3, 5, "Confirm the rebar spacing before you pour.", minutesAgo(118)),
+        Message(3, 3, 5, "Good. The Unit 4 pour is going ahead today.", minutesAgo(125), isRead = false),
+        Message(4, 3, 5, "Confirm the rebar spacing before you pour.", minutesAgo(118), isRead = false),
         Message(5, 2, 5, "Well done on yesterday's walkaround.", daysAgo(1, 16, 40)),
         Message(6, 5, 2, "Thank you.", daysAgo(1, 16, 52)),
         Message(7, 7, 2, "Membrane delivery pushed to Monday — roof is on hold.", daysAgo(1, 11, 3)),
         Message(8, 2, 7, "Noted. Move the crew to the level 3 columns until then.", daysAgo(1, 11, 20)),
-        Message(9, 3, 2, "Riverside pour for Unit 4 is scheduled for today.", minutesAgo(200)),
-        Message(10, 6, 5, "Cement for Block B is staged at the lay-down area.", minutesAgo(75))
+        Message(9, 3, 2, "Riverside pour for Unit 4 is scheduled for today.", minutesAgo(200), isRead = false),
+        Message(10, 6, 5, "Cement for Block B is staged at the lay-down area.", minutesAgo(75), isRead = false)
     )
 
     // -----------------------------------------------------------------------

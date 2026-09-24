@@ -207,7 +207,9 @@
     <string name="stock_out">Out of stock</string>
     <string name="incident_near_miss">Near miss</string>
     <string name="incident_minor">Minor</string>
+    <string name="incident_moderate">Moderate</string>
     <string name="incident_serious">Serious</string>
+    <string name="incident_critical">Critical</string>
     <string name="notification_type_task">Task</string>
     <string name="notification_type_safety">Safety</string>
     <string name="notification_type_message">Message</string>

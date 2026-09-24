@@ -9,7 +9,8 @@ data class DailyReportDraft(
     val userId: Int,
     val weather: String,
     val workCompleted: String,
-    val problemsEncountered: String
+    val problemsEncountered: String,
+    val photoUris: List<String> = emptyList()
 )
 
 interface DailyReportRepository {

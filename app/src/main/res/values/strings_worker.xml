@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings for the worker screens and the shared pieces they introduced. -->
+<resources>
+
+    <!-- Photo attachments -->
+    <string name="photo_add">Add photo</string>
+    <string name="photo_attached_description">Attached photo %1$d</string>
+    <string name="photo_remove">Remove photo %1$d</string>
+    <plurals name="photos_attached">
+        <item quantity="one">%1$d of %2$d photos attached</item>
+        <item quantity="other">%1$d of %2$d photos attached</item>
+    </plurals>
+
+    <!-- Weather -->
+    <string name="weather_sunny">Sunny</string>
+    <string name="weather_cloudy">Cloudy</string>
+    <string name="weather_rainy">Rainy</string>
+    <string name="weather_windy">Windy</string>
+    <string name="weather_hot">Hot</string>
+    <string name="weather_cold">Cold</string>
+</resources>
