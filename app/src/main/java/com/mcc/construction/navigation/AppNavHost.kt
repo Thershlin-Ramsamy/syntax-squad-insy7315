@@ -25,7 +25,7 @@ import com.mcc.construction.ui.screens.inventory.InventoryScreen
 import com.mcc.construction.ui.screens.inventory.MaterialDetailScreen
 import com.mcc.construction.ui.screens.login.ForgotPasswordRoute
 import com.mcc.construction.ui.screens.login.LoginRoute
-import com.mcc.construction.ui.screens.messages.ChatScreen
+import com.mcc.construction.ui.screens.messages.ChatRoute
 import com.mcc.construction.ui.screens.messages.MessagesRoute
 import com.mcc.construction.ui.screens.notifications.NotificationsRoute
 import com.mcc.construction.ui.screens.profile.ProfileRoute
@@ -150,7 +150,10 @@ fun AppNavHost(
             )
         }
         composable(Routes.MESSAGES) {
-            MessagesRoute(onOpenChat = { userId -> navController.navigate(Routes.chat(userId.toString())) })
+            MessagesRoute(
+                onOpenChat = { userId -> navController.navigate(Routes.chat(userId.toString())) },
+                chatPane = { userId -> ChatRoute(otherUserId = userId, onBack = {}, embedded = true) }
+            )
         }
 
         // --- Manager -------------------------------------------------------
@@ -213,9 +216,10 @@ fun AppNavHost(
             route = Routes.CHAT_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_CONVERSATION_ID) { type = NavType.StringType })
         ) { entry ->
-            ChatScreen(
-                navController = navController,
-                conversationId = entry.arguments?.getString(Routes.ARG_CONVERSATION_ID).orEmpty()
+            // The conversation is identified by the other person's user id.
+            ChatRoute(
+                otherUserId = entry.arguments?.getString(Routes.ARG_CONVERSATION_ID)?.toIntOrNull() ?: -1,
+                onBack = { navController.popBackStack() }
             )
         }
     }
