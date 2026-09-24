@@ -46,12 +46,27 @@ data class TaskListUiState(
     val visible: List<TaskListItem>
         get() = items.orEmpty().filter { filter.status == null || it.task.status == filter.status }
 
-    /** Due today or earlier, or already under way. */
+    /**
+     * Today's work: open tasks due today or earlier, anything under way, and
+     * tasks due today that are already done.
+     */
     val dueNow: List<TaskListItem>
-        get() = visible.filter { !it.task.deadline.isAfter(today) || it.task.status == TaskStatus.IN_PROGRESS }
+        get() = visible.filter {
+            val task = it.task
+            when (task.status) {
+                TaskStatus.IN_PROGRESS -> true
+                TaskStatus.COMPLETED -> task.deadline == today
+                else -> !task.deadline.isAfter(today)
+            }
+        }
 
+    /** Open work due after today. */
     val comingUp: List<TaskListItem>
-        get() = visible - dueNow.toSet()
+        get() = visible.filter { it.task.status != TaskStatus.COMPLETED } - dueNow.toSet()
+
+    /** Finished work that was due before today — kept out of today's list. */
+    val doneEarlier: List<TaskListItem>
+        get() = visible.filter { it.task.status == TaskStatus.COMPLETED } - dueNow.toSet()
 
     /** What the detail pane shows: the chosen task, or the first in the list. */
     val paneTaskId: Int?
