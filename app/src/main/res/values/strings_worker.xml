@@ -124,4 +124,38 @@
     <string name="attendance_yesterday">Yesterday</string>
     <string name="attendance_history_empty_title">No shifts yet</string>
     <string name="attendance_history_empty_message">Finished shifts appear here after you clock out.</string>
+
+    <!-- Daily report -->
+    <string name="report_project">Project</string>
+    <string name="report_weather">Weather</string>
+    <string name="report_pick_one">Pick one to continue.</string>
+    <string name="report_work_completed">Work completed</string>
+    <string name="report_work_placeholder">What did you get done today?</string>
+    <string name="report_missing_work">Add at least one line about the work done.</string>
+    <plurals name="report_add_finished_tasks">
+        <item quantity="one">Add %d finished task</item>
+        <item quantity="other">Add %d finished tasks</item>
+    </plurals>
+    <string name="report_problems">Problems encountered</string>
+    <string name="report_problems_placeholder">Anything that slowed the work down</string>
+    <string name="report_quick_add">Tap to add a common problem</string>
+    <string name="report_problem_none">No problems</string>
+    <string name="report_problem_materials">Waiting on materials</string>
+    <string name="report_problem_weather">Weather delay</string>
+    <string name="report_problem_equipment">Equipment breakdown</string>
+    <string name="report_photos">Photos</string>
+    <string name="report_submit">Submit report</string>
+    <string name="report_missing_title">A few things are missing</string>
+    <string name="report_missing_message">Fill in the fields marked in red, then submit again.</string>
+    <string name="report_confirm_title">Submit daily report?</string>
+    <string name="report_confirm_message">Your report for %1$s with %2$d photos goes to your site manager for approval.</string>
+    <string name="report_confirm_send">Submit</string>
+    <string name="report_confirm_edit">Keep editing</string>
+    <string name="report_sent_title">Report submitted</string>
+    <string name="report_sent_message">Your report for %1$s is with your site manager for approval.</string>
+    <string name="report_sent_offline_message">Your report for %1$s is saved on this device and will upload when you are back online.</string>
+    <string name="report_done">Done</string>
+    <string name="report_write_another">Write another report</string>
+    <string name="report_already_sent_title">Already reported today</string>
+    <string name="report_already_sent_message">You sent a report for this project today. Submitting again adds a second report.</string>
 </resources>
