@@ -148,7 +148,7 @@
     <string name="report_missing_title">A few things are missing</string>
     <string name="report_missing_message">Fill in the fields marked in red, then submit again.</string>
     <string name="report_confirm_title">Submit daily report?</string>
-    <string name="report_confirm_message">Your report for %1$s with %2$d photos goes to your site manager for approval.</string>
+    <string name="report_confirm_message">Your report for %1$s goes to your site manager for approval. Photos attached: %2$d.</string>
     <string name="report_confirm_send">Submit</string>
     <string name="report_confirm_edit">Keep editing</string>
     <string name="report_sent_title">Report submitted</string>

@@ -34,17 +34,6 @@ object MockRepository {
      */
     val currentRole = mutableStateOf(UserRole.WORKER)
 
-    /**
-     * Mirror of the SyncRepository's online state, kept in step by the app
-     * root. Read-only for screens: offline mode is switched in Settings or on
-     * the Offline & sync screen.
-     */
-    val isOnline = mutableStateOf(true)
-    val isClockedIn = mutableStateOf(false)
-
-    fun toggleClockedIn() {
-        isClockedIn.value = !isClockedIn.value
-    }
 
     private val profiles = mapOf(
         UserRole.WORKER to UserProfile(
@@ -176,11 +165,17 @@ object MockRepository {
         )
     )
 
-    fun getTask(id: String): Task? = tasks.firstOrNull { it.id == id }
-
-    fun markComplete(id: String) {
-        val index = tasks.indexOfFirst { it.id == id }
-        if (index != -1) tasks[index] = tasks[index].copy(status = TaskStatus.COMPLETED)
+    /**
+     * Copies task statuses from the TaskRepository, so a task a worker moves on
+     * in the new screens shows the same status on the manager screens that
+     * still read this list. Legacy ids ("T-101") carry the same number.
+     */
+    fun syncTaskStatuses(statuses: Map<Int, TaskStatus>) {
+        tasks.forEachIndexed { index, task ->
+            val id = task.id.filter(Char::isDigit).toIntOrNull() ?: return@forEachIndexed
+            val status = statuses[id] ?: return@forEachIndexed
+            if (task.status != status) tasks[index] = task.copy(status = status)
+        }
     }
 
     // -----------------------------------------------------------------------
@@ -316,18 +311,6 @@ object MockRepository {
     fun getEmployee(id: String): Employee? = employees.firstOrNull { it.id == id }
 
     // -----------------------------------------------------------------------
-    // Attendance
-    // -----------------------------------------------------------------------
-
-    val attendance = listOf(
-        AttendanceRecord("Today", "06:52", null, "In progress", "Riverside Estate"),
-        AttendanceRecord("Yesterday", "06:48", "16:12", "9h 24m", "Riverside Estate"),
-        AttendanceRecord("Tue, 12 Aug", "06:55", "16:05", "9h 10m", "Riverside Estate"),
-        AttendanceRecord("Mon, 11 Aug", "07:02", "15:58", "8h 56m", "Riverside Estate"),
-        AttendanceRecord("Fri, 08 Aug", "06:50", "16:20", "9h 30m", "Riverside Estate")
-    )
-
-    // -----------------------------------------------------------------------
     // Inventory
     // -----------------------------------------------------------------------
 
@@ -361,56 +344,8 @@ object MockRepository {
     fun getMaterial(id: String): Material? = materials.firstOrNull { it.id == id }
 
     // -----------------------------------------------------------------------
-    // Messaging
-    // -----------------------------------------------------------------------
-
-    val conversations = listOf(
-        Conversation("C-01", "Johan Botha", "Confirm the rebar spacing before you pour.", "08:14", 2, false),
-        Conversation("C-02", "Block C Crew", "Lerato: Scaffold is up on the east side.", "07:52", 0, true),
-        Conversation("C-03", "Naledi Khumalo", "Well done on yesterday's walkaround.", "Yesterday", 0, false),
-        Conversation("C-04", "Safety Notices", "Zanele: Reminder — harness checks Friday.", "Yesterday", 1, true),
-        Conversation("C-05", "Stores — Riverside", "Membrane delivery pushed to Monday.", "Tue", 0, false)
-    )
-
-    fun getConversation(id: String): Conversation? = conversations.firstOrNull { it.id == id }
-
-    fun messagesFor(conversationId: String): List<ChatMessage> = when (conversationId) {
-        "C-01" -> listOf(
-            ChatMessage("m1", "Johan Botha", "Morning Sipho — are you on site yet?", "08:02", false),
-            ChatMessage("m2", "Sipho Dlamini", "Morning. Yes, just clocked in.", "08:05", true),
-            ChatMessage("m3", "Johan Botha", "Good. Unit 4 pour is going ahead today.", "08:11", false),
-            ChatMessage("m4", "Johan Botha", "Confirm the rebar spacing before you pour.", "08:14", false)
-        )
-
-        "C-02" -> listOf(
-            ChatMessage("m1", "Thabo Mokoena", "Boards are staged at Yard A.", "07:31", false),
-            ChatMessage("m2", "Sipho Dlamini", "Thanks Thabo, I'll fetch them shortly.", "07:40", true),
-            ChatMessage("m3", "Lerato Nkosi", "Scaffold is up on the east side.", "07:52", false)
-        )
-
-        else -> listOf(
-            ChatMessage("m1", "Naledi Khumalo", "Well done on yesterday's walkaround.", "Yesterday", false),
-            ChatMessage("m2", "Sipho Dlamini", "Thank you.", "Yesterday", true)
-        )
-    }
-
-    // -----------------------------------------------------------------------
     // Safety
     // -----------------------------------------------------------------------
-
-    val checklist = mutableStateListOf(
-        ChecklistItem("S-1", "PPE inspected", "Hard hat, boots, hi-vis and gloves checked and undamaged", true),
-        ChecklistItem("S-2", "Work area cordoned", "Barriers and signage in place around the pour zone", true),
-        ChecklistItem("S-3", "Scaffold tags current", "All scaffold bays show a green tag dated this week", false),
-        ChecklistItem("S-4", "Fire extinguishers accessible", "Nothing stacked in front of extinguisher points", false),
-        ChecklistItem("S-5", "Plant pre-use check done", "Mixer and hoist checked and logged before starting", false),
-        ChecklistItem("S-6", "First aid kit stocked", "Site office kit sealed and within expiry", true)
-    )
-
-    fun toggleChecklistItem(id: String) {
-        val index = checklist.indexOfFirst { it.id == id }
-        if (index != -1) checklist[index] = checklist[index].copy(checked = !checklist[index].checked)
-    }
 
     val incidents = listOf(
         Incident("I-01", "Dropped hand tool from level 2", "Riverside Estate", "Thabo Mokoena", "11 Aug 2026", IncidentSeverity.NEAR_MISS, "Closed"),
