@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings for the worker screens and the shared pieces they introduced. -->
+<resources>
+
+    <!-- Photo attachments -->
+    <string name="photo_add">Add photo</string>
+    <string name="photo_attached_description">Attached photo %1$d</string>
+    <string name="photo_remove">Remove photo %1$d</string>
+    <plurals name="photos_attached">
+        <item quantity="one">%1$d of %2$d photos attached</item>
+        <item quantity="other">%1$d of %2$d photos attached</item>
+    </plurals>
+
+    <!-- Weather -->
+    <string name="weather_sunny">Sunny</string>
+    <string name="weather_cloudy">Cloudy</string>
+    <string name="weather_rainy">Rainy</string>
+    <string name="weather_windy">Windy</string>
+    <string name="weather_hot">Hot</string>
+    <string name="weather_cold">Cold</string>
+
+    <!-- Tasks, shared by dashboard and task list -->
+    <string name="task_due_today">Due today</string>
+    <string name="task_due_tomorrow">Due tomorrow</string>
+    <string name="task_due_on">Due %1$s</string>
+    <string name="task_overdue_since">Overdue since %1$s</string>
+
+    <!-- Attendance, shared by dashboard and attendance -->
+    <string name="attendance_clock_in">Clock in</string>
+    <string name="attendance_clock_out">Clock out</string>
+    <string name="attendance_working">Working…</string>
+    <string name="attendance_not_clocked_in">Not clocked in</string>
+    <string name="attendance_on_shift_since">On shift since %1$s</string>
+    <string name="attendance_on_shift_for">On shift for %1$d h %2$d min</string>
+    <string name="attendance_clocked_in_message">Clocked in at %1$s</string>
+    <string name="attendance_clocked_out_message">Clocked out at %1$s. %2$s hours worked.</string>
+
+    <!-- Worker dashboard -->
+    <string name="dashboard_greeting_morning">Good morning, %1$s</string>
+    <string name="dashboard_greeting_afternoon">Good afternoon, %1$s</string>
+    <string name="dashboard_greeting_evening">Good evening, %1$s</string>
+    <string name="dashboard_date_and_site">%1$s · %2$s</string>
+    <string name="dashboard_today">Today</string>
+    <string name="dashboard_in_progress">In progress</string>
+    <string name="dashboard_to_do">To do</string>
+    <string name="dashboard_done">Done</string>
+    <string name="dashboard_quick_actions">Quick actions</string>
+    <plurals name="dashboard_open_tasks">
+        <item quantity="one">%d open</item>
+        <item quantity="other">%d open</item>
+    </plurals>
+    <string name="dashboard_checklist_due">Due today</string>
+    <string name="dashboard_checklist_done">Done today</string>
+    <string name="dashboard_report_incident">Report incident</string>
+    <plurals name="dashboard_unread_notifications">
+        <item quantity="one">%d unread notification</item>
+        <item quantity="other">%d unread notifications</item>
+    </plurals>
+    <string name="dashboard_unread_notifications_hint">Task changes and safety notices</string>
+    <string name="dashboard_next_up">Next up</string>
+    <string name="dashboard_view_all">View all</string>
+    <string name="dashboard_all_done_title">Nothing left for today</string>
+    <string name="dashboard_all_done_message">Every task due today is done. Check with your foreman for the next job.</string>
+
+    <!-- Task list -->
+    <string name="tasks_filter_all">All (%1$d)</string>
+    <string name="tasks_filter_pending">Pending (%1$d)</string>
+    <string name="tasks_filter_in_progress">In progress (%1$d)</string>
+    <string name="tasks_filter_completed">Completed (%1$d)</string>
+    <string name="tasks_section_now">Today</string>
+    <string name="tasks_section_coming_up">Coming up</string>
+    <string name="tasks_showing_all">Showing every task across your projects.</string>
+    <string name="tasks_empty_title">No tasks assigned</string>
+    <string name="tasks_empty_message">When your foreman assigns you work it appears here.</string>
+    <string name="tasks_filter_empty_title">Nothing here</string>
+    <string name="tasks_filter_empty_message">No tasks with this status. Try another filter.</string>
+    <string name="tasks_pick_title">Pick a task</string>
+    <string name="tasks_pick_message">Choose a task on the left to see its details.</string>
+
+    <!-- Task details -->
+    <string name="task_detail_title">Task details</string>
+    <string name="task_detail_project">Project</string>
+    <string name="task_detail_location">Location</string>
+    <string name="task_detail_deadline">Deadline</string>
+    <string name="task_detail_assigned">Assigned to</string>
+    <string name="task_detail_unassigned">Not assigned yet</string>
+    <string name="task_detail_description">What to do</string>
+    <string name="task_detail_proof">Proof of work</string>
+    <string name="task_detail_proof_hint">Add a photo of the finished work so your foreman can sign it off.</string>
+    <string name="task_detail_proof_done">Photos taken when the work was done.</string>
+    <string name="task_steps_description">Task progress: %1$s</string>
+    <string name="task_action_start">Start task</string>
+    <string name="task_action_complete">Mark complete</string>
+    <string name="task_action_done">Task completed</string>
+    <string name="task_started_message">Task started</string>
+    <string name="task_started_offline_message">Task started. Saved offline and will upload when you reconnect.</string>
+    <string name="task_completed_message">Task marked complete</string>
+    <string name="task_completed_offline_message">Task marked complete. Saved offline and will upload when you reconnect.</string>
+    <string name="task_photos_added">Photos attached: %1$d</string>
+    <string name="task_photo_limit">Only %1$d photos fit on a task. Extra photos were left out.</string>
+    <string name="task_photo_removed">Photo removed</string>
+    <string name="task_no_photo_title">Complete without a photo?</string>
+    <string name="task_no_photo_message">A photo lets your foreman sign the work off without a site visit. You can still complete the task without one.</string>
+    <string name="task_no_photo_add">Add a photo</string>
+    <string name="task_no_photo_complete">Complete anyway</string>
+    <string name="task_blocked_title">This task is blocked</string>
+    <string name="task_blocked_message">Work cannot start until the problem is cleared. Message your foreman for an update.</string>
+    <string name="task_read_only_title">Not assigned to you</string>
+    <string name="task_read_only_message">You can read this task, but only the people on it can update it.</string>
+    <string name="task_not_found_title">Task not found</string>
+    <string name="task_not_found_message">It may have been removed or reassigned. Go back to your task list.</string>
+
+    <!-- Attendance -->
+    <string name="attendance_clock_in_hint">Tap the button when you arrive on site.</string>
+    <string name="attendance_clocked_in_offline">Clocked in at %1$s. Saved offline and will upload when you reconnect.</string>
+    <string name="attendance_clocked_out_offline">Clocked out at %1$s. %2$s hours worked. Saved offline and will upload when you reconnect.</string>
+    <string name="attendance_this_week">This week</string>
+    <string name="attendance_hours_value">%1$s h</string>
+    <string name="attendance_hours_worked">Hours worked</string>
+    <string name="attendance_shifts">Shifts</string>
+    <string name="attendance_recent">Recent shifts</string>
+    <string name="attendance_shift_times">%1$s to %2$s</string>
+    <string name="attendance_today">Today</string>
+    <string name="attendance_yesterday">Yesterday</string>
+    <string name="attendance_history_empty_title">No shifts yet</string>
+    <string name="attendance_history_empty_message">Finished shifts appear here after you clock out.</string>
+
+    <!-- Daily report -->
+    <string name="report_project">Project</string>
+    <string name="report_weather">Weather</string>
+    <string name="report_pick_one">Pick one to continue.</string>
+    <string name="report_work_completed">Work completed</string>
+    <string name="report_work_placeholder">What did you get done today?</string>
+    <string name="report_missing_work">Add at least one line about the work done.</string>
+    <plurals name="report_add_finished_tasks">
+        <item quantity="one">Add %d finished task</item>
+        <item quantity="other">Add %d finished tasks</item>
+    </plurals>
+    <string name="report_problems">Problems encountered</string>
+    <string name="report_problems_placeholder">Anything that slowed the work down</string>
+    <string name="report_quick_add">Tap to add a common problem</string>
+    <string name="report_problem_none">No problems</string>
+    <string name="report_problem_materials">Waiting on materials</string>
+    <string name="report_problem_weather">Weather delay</string>
+    <string name="report_problem_equipment">Equipment breakdown</string>
+    <string name="report_photos">Photos</string>
+    <string name="report_submit">Submit report</string>
+    <string name="report_missing_title">A few things are missing</string>
+    <string name="report_missing_message">Fill in the fields marked in red, then submit again.</string>
+    <string name="report_confirm_title">Submit daily report?</string>
+    <string name="report_confirm_message">Your report for %1$s goes to your site manager for approval. Photos attached: %2$d.</string>
+    <string name="report_confirm_send">Submit</string>
+    <string name="report_confirm_edit">Keep editing</string>
+    <string name="report_sent_title">Report submitted</string>
+    <string name="report_sent_message">Your report for %1$s is with your site manager for approval.</string>
+    <string name="report_sent_offline_message">Your report for %1$s is saved on this device and will upload when you are back online.</string>
+    <string name="report_done">Done</string>
+    <string name="report_write_another">Write another report</string>
+    <string name="report_already_sent_title">Already reported today</string>
+    <string name="report_already_sent_message">You sent a report for this project today. Submitting again adds a second report.</string>
+
+    <!-- Safety checklist -->
+    <string name="checklist_site">Site</string>
+    <string name="checklist_progress">%1$d of %2$d checked</string>
+    <string name="checklist_result_pass">All clear</string>
+    <string name="checklist_result_fail">Problem found</string>
+    <string name="checklist_result_incomplete">In progress</string>
+    <string name="checklist_items">Checks</string>
+    <string name="checklist_item_title">%1$d. %2$s</string>
+    <string name="checklist_yes">Yes</string>
+    <string name="checklist_no">No</string>
+    <string name="checklist_notes">Notes (optional)</string>
+    <string name="checklist_notes_placeholder">Anything the safety officer should know</string>
+    <string name="checklist_answer_all">Answer every check to submit. Checks left: %1$d.</string>
+    <string name="checklist_submit">Submit checklist</string>
+    <string name="checklist_passed_title">Checklist passed</string>
+    <string name="checklist_passed_message">The site is clear to work. Your checklist has been recorded.</string>
+    <string name="checklist_failed_title">Checklist failed</string>
+    <string name="checklist_failed_message">These checks failed: %1$s. Do not start work in the affected area until it is made safe.</string>
+    <string name="checklist_saved_offline">Saved offline and will upload when you reconnect.</string>
+    <string name="checklist_report_incident">Report an incident</string>
+    <string name="checklist_start_again">Start a new checklist</string>
+    <string name="checklist_done_today_pass">You already passed a checklist today</string>
+    <string name="checklist_done_today_fail">Your checklist today found a problem</string>
+    <string name="checklist_done_today_message">You can run it again, for example after a problem is fixed.</string>
+
+    <!-- Incident report -->
+    <string name="incident_title">Report an incident</string>
+    <string name="incident_linked_title">Linked to your safety checklist</string>
+    <string name="incident_linked_message">This report is attached to the checklist for %1$s on %2$s.</string>
+    <string name="incident_severity">How serious was it?</string>
+    <string name="incident_severity_hint">1 is a near miss with no harm, 5 is critical.</string>
+    <string name="incident_urgent_title">Is anyone hurt or in danger?</string>
+    <string name="incident_urgent_message">Get help first: call the site first aider or emergency services on 112, then finish this report.</string>
+    <string name="incident_description">What happened?</string>
+    <string name="incident_description_placeholder">Where it happened, what you saw, who was involved</string>
+    <string name="incident_description_missing">Describe what happened.</string>
+    <string name="incident_quick_add">Tap to add</string>
+    <string name="incident_phrase_slip">Slip or trip</string>
+    <string name="incident_phrase_falling">Falling object</string>
+    <string name="incident_phrase_equipment">Equipment fault</string>
+    <string name="incident_phrase_injury">Someone was injured</string>
+    <string name="incident_phrase_no_injury">No one was hurt</string>
+    <string name="incident_photo">Photo (optional)</string>
+    <string name="incident_missing_message">Choose how serious it was and describe what happened.</string>
+    <string name="incident_submit">Submit incident report</string>
+    <string name="incident_sent_title">Incident reported</string>
+    <string name="incident_sent_message">Your %1$s incident has gone to the safety officer.</string>
+    <string name="incident_sent_offline_message">Your %1$s incident is saved on this device and will reach the safety officer when you are back online.</string>
+
+    <!-- Messages -->
+    <string name="messages_empty_title">No messages yet</string>
+    <string name="messages_empty_message">Messages from your foreman and crew appear here.</string>
+    <plurals name="messages_unread_total">
+        <item quantity="one">%d unread message</item>
+        <item quantity="other">%d unread messages</item>
+    </plurals>
+    <plurals name="messages_unread_count">
+        <item quantity="one">%d unread</item>
+        <item quantity="other">%d unread</item>
+    </plurals>
+    <string name="messages_you_prefix">You: %1$s</string>
+
+    <!-- Chat -->
+    <string name="chat_placeholder">Type a message</string>
+    <string name="chat_send">Send message</string>
+    <string name="chat_empty_title">No messages yet</string>
+    <string name="chat_empty_message">Say hello to %1$s, or tap a quick reply below.</string>
+    <string name="chat_sent_offline">Saved offline. It will send when you are back online.</string>
+    <string name="chat_quick_on_my_way">On my way</string>
+    <string name="chat_quick_done">Done</string>
+    <string name="chat_quick_need_help">Need help here</string>
+    <string name="chat_quick_running_late">Running late</string>
+</resources>

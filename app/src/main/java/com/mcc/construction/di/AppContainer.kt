@@ -15,6 +15,7 @@ import com.mcc.construction.data.repository.SettingsRepository
 import com.mcc.construction.data.repository.SyncRepository
 import com.mcc.construction.data.repository.TaskRepository
 import com.mcc.construction.data.repository.UserRepository
+import java.time.Clock
 
 /**
  * Every repository the app uses, in one place — manual dependency injection.
@@ -39,6 +40,13 @@ interface AppContainer {
     val auditLogRepository: AuditLogRepository
     val syncRepository: SyncRepository
     val settingsRepository: SettingsRepository
+
+    /**
+     * The time source for anything that needs "now" or "today". ViewModels
+     * take it from here rather than reading the system clock, so tests can pin
+     * the date.
+     */
+    val clock: Clock
 
     /**
      * Sign-in shortcuts shown on the login screen. The fake container lists the

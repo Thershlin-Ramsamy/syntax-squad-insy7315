@@ -124,18 +124,6 @@ data class Employee(
 )
 
 // ---------------------------------------------------------------------------
-// Attendance
-// ---------------------------------------------------------------------------
-
-data class AttendanceRecord(
-    val date: String,
-    val clockIn: String,
-    val clockOut: String?,
-    val hours: String,
-    val site: String
-)
-
-// ---------------------------------------------------------------------------
 // Inventory
 // ---------------------------------------------------------------------------
 
@@ -166,36 +154,8 @@ data class Material(
 }
 
 // ---------------------------------------------------------------------------
-// Messaging
-// ---------------------------------------------------------------------------
-
-data class Conversation(
-    val id: String,
-    val name: String,
-    val lastMessage: String,
-    val timestamp: String,
-    val unread: Int,
-    val isGroup: Boolean
-)
-
-data class ChatMessage(
-    val id: String,
-    val sender: String,
-    val body: String,
-    val timestamp: String,
-    val fromMe: Boolean
-)
-
-// ---------------------------------------------------------------------------
 // Safety
 // ---------------------------------------------------------------------------
-
-data class ChecklistItem(
-    val id: String,
-    val text: String,
-    val detail: String,
-    val checked: Boolean
-)
 
 enum class IncidentSeverity(val label: String) {
     NEAR_MISS("Near Miss"),

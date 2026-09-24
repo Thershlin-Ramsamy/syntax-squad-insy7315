@@ -16,7 +16,8 @@ import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
 import com.mcc.construction.ui.screens.admin.AuditLogScreen
 import com.mcc.construction.ui.screens.admin.UserManagementScreen
 import com.mcc.construction.ui.screens.dashboard.ManagerDashboardScreen
-import com.mcc.construction.ui.screens.dashboard.WorkerDashboardScreen
+import com.mcc.construction.ui.screens.dashboard.WorkerDashboardRoute
+import com.mcc.construction.ui.screens.dashboard.WorkerDestination
 import com.mcc.construction.ui.screens.documents.DocumentsScreen
 import com.mcc.construction.ui.screens.employees.EmployeeListScreen
 import com.mcc.construction.ui.screens.employees.EmployeeProfileScreen
@@ -24,8 +25,8 @@ import com.mcc.construction.ui.screens.inventory.InventoryScreen
 import com.mcc.construction.ui.screens.inventory.MaterialDetailScreen
 import com.mcc.construction.ui.screens.login.ForgotPasswordRoute
 import com.mcc.construction.ui.screens.login.LoginRoute
-import com.mcc.construction.ui.screens.messages.ChatScreen
-import com.mcc.construction.ui.screens.messages.MessagesScreen
+import com.mcc.construction.ui.screens.messages.ChatRoute
+import com.mcc.construction.ui.screens.messages.MessagesRoute
 import com.mcc.construction.ui.screens.notifications.NotificationsRoute
 import com.mcc.construction.ui.screens.profile.ProfileRoute
 import com.mcc.construction.ui.screens.profile.ProfileShortcut
@@ -36,12 +37,12 @@ import com.mcc.construction.ui.screens.settings.SettingsRoute
 import com.mcc.construction.ui.screens.splash.SplashDestination
 import com.mcc.construction.ui.screens.splash.SplashRoute
 import com.mcc.construction.ui.screens.sync.SyncStatusRoute
-import com.mcc.construction.ui.screens.tasks.TaskDetailScreen
-import com.mcc.construction.ui.screens.tasks.TaskListScreen
-import com.mcc.construction.ui.screens.worker.AttendanceScreen
-import com.mcc.construction.ui.screens.worker.DailyReportScreen
-import com.mcc.construction.ui.screens.worker.IncidentReportScreen
-import com.mcc.construction.ui.screens.worker.SafetyChecklistScreen
+import com.mcc.construction.ui.screens.tasks.TaskDetailRoute
+import com.mcc.construction.ui.screens.tasks.TaskListRoute
+import com.mcc.construction.ui.screens.worker.AttendanceRoute
+import com.mcc.construction.ui.screens.worker.DailyReportRoute
+import com.mcc.construction.ui.screens.worker.IncidentReportRoute
+import com.mcc.construction.ui.screens.worker.SafetyChecklistRoute
 
 /**
  * The navigation graph: one entry per screen.
@@ -112,13 +113,48 @@ fun AppNavHost(
         composable(Routes.DOCUMENTS) { DocumentsScreen(navController) }
 
         // --- Worker --------------------------------------------------------
-        composable(Routes.WORKER_DASHBOARD) { WorkerDashboardScreen(navController) }
-        composable(Routes.TASKS) { TaskListScreen(navController) }
-        composable(Routes.ATTENDANCE) { AttendanceScreen(navController) }
-        composable(Routes.DAILY_REPORT) { DailyReportScreen(navController) }
-        composable(Routes.SAFETY_CHECKLIST) { SafetyChecklistScreen(navController) }
-        composable(Routes.INCIDENT_REPORT) { IncidentReportScreen(navController) }
-        composable(Routes.MESSAGES) { MessagesScreen(navController) }
+        composable(Routes.WORKER_DASHBOARD) {
+            WorkerDashboardRoute(
+                onNavigate = { destination -> navController.navigate(destination.route) },
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) }
+            )
+        }
+        composable(Routes.TASKS) {
+            TaskListRoute(
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) },
+                detailPane = { taskId ->
+                    TaskDetailRoute(taskId = taskId, onBack = {}, embedded = true)
+                }
+            )
+        }
+        composable(Routes.ATTENDANCE) { AttendanceRoute() }
+        composable(Routes.DAILY_REPORT) { DailyReportRoute(onDone = { navController.popBackStack() }) }
+        composable(Routes.SAFETY_CHECKLIST) {
+            SafetyChecklistRoute(
+                onReportIncident = { inspectionId -> navController.navigate(Routes.incidentReport(inspectionId)) },
+                onDone = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Routes.INCIDENT_REPORT_PATTERN,
+            arguments = listOf(
+                navArgument(Routes.ARG_INSPECTION_ID) {
+                    type = NavType.IntType
+                    defaultValue = NO_INSPECTION
+                }
+            )
+        ) { entry ->
+            IncidentReportRoute(
+                inspectionId = entry.arguments?.getInt(Routes.ARG_INSPECTION_ID)?.takeIf { it != NO_INSPECTION },
+                onDone = { navController.popBackStack() }
+            )
+        }
+        composable(Routes.MESSAGES) {
+            MessagesRoute(
+                onOpenChat = { userId -> navController.navigate(Routes.chat(userId.toString())) },
+                chatPane = { userId -> ChatRoute(otherUserId = userId, onBack = {}, embedded = true) }
+            )
+        }
 
         // --- Manager -------------------------------------------------------
         composable(Routes.MANAGER_DASHBOARD) { ManagerDashboardScreen(navController) }
@@ -140,9 +176,9 @@ fun AppNavHost(
             route = Routes.TASK_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.StringType })
         ) { entry ->
-            TaskDetailScreen(
-                navController = navController,
-                taskId = entry.arguments?.getString(Routes.ARG_TASK_ID).orEmpty()
+            TaskDetailRoute(
+                taskId = taskIdFrom(entry.arguments?.getString(Routes.ARG_TASK_ID)),
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -180,9 +216,10 @@ fun AppNavHost(
             route = Routes.CHAT_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_CONVERSATION_ID) { type = NavType.StringType })
         ) { entry ->
-            ChatScreen(
-                navController = navController,
-                conversationId = entry.arguments?.getString(Routes.ARG_CONVERSATION_ID).orEmpty()
+            // The conversation is identified by the other person's user id.
+            ChatRoute(
+                otherUserId = entry.arguments?.getString(Routes.ARG_CONVERSATION_ID)?.toIntOrNull() ?: -1,
+                onBack = { navController.popBackStack() }
             )
         }
     }
@@ -212,3 +249,23 @@ private val ProfileShortcut.route: String
         ProfileShortcut.SYNC -> Routes.SYNC_STATUS
         ProfileShortcut.SETTINGS -> Routes.SETTINGS
     }
+
+private val WorkerDestination.route: String
+    get() = when (this) {
+        WorkerDestination.TASKS -> Routes.TASKS
+        WorkerDestination.ATTENDANCE -> Routes.ATTENDANCE
+        WorkerDestination.DAILY_REPORT -> Routes.DAILY_REPORT
+        WorkerDestination.SAFETY_CHECKLIST -> Routes.SAFETY_CHECKLIST
+        WorkerDestination.INCIDENT_REPORT -> Routes.INCIDENT_REPORT
+        WorkerDestination.NOTIFICATIONS -> Routes.NOTIFICATIONS
+    }
+
+/**
+ * Task ids in routes are numbers. Older screens still pass the prototype's
+ * "T-101" form; its digits are the same id, so both work.
+ */
+private fun taskIdFrom(argument: String?): Int =
+    argument.orEmpty().filter(Char::isDigit).toIntOrNull() ?: -1
+
+/** The inspection argument's value when an incident is reported on its own. */
+private const val NO_INSPECTION = -1

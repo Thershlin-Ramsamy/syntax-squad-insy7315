@@ -9,7 +9,10 @@ import java.time.LocalDate
  */
 enum class ReportStatus { SUBMITTED, APPROVED }
 
-/** A row of the DAILY_REPORTS table. */
+/**
+ * A row of the DAILY_REPORTS table. [photoUris] is not in the ERD yet — see
+ * "Fields beyond the ERD" in docs/ARCHITECTURE.md.
+ */
 data class DailyReport(
     val reportId: Int,
     val projectId: Int,
@@ -18,5 +21,6 @@ data class DailyReport(
     val weather: String,
     val workCompleted: String,
     val problemsEncountered: String,
-    val status: ReportStatus
+    val status: ReportStatus,
+    val photoUris: List<String> = emptyList()
 )

@@ -19,7 +19,7 @@ import kotlin.time.Duration.Companion.milliseconds
  *   loading states can be seen. Tests pass [Duration.ZERO].
  */
 class FakeAppContainer(
-    clock: Clock = Clock.systemDefaultZone(),
+    override val clock: Clock = Clock.systemDefaultZone(),
     latency: Duration = DEFAULT_LATENCY
 ) : AppContainer {
 

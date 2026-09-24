@@ -14,28 +14,37 @@ data class SafetyInspection(
 )
 
 /**
- * The meaning of `INCIDENT_REPORTS.SeverityLevel`. The ERD stores a bare
- * integer; this enum fixes what each value means so every screen agrees.
+ * The meaning of `INCIDENT_REPORTS.SeverityLevel`, on a 1–5 scale. The ERD
+ * stores a bare integer; this enum fixes what each value means so every screen
+ * agrees.
  */
 enum class IncidentSeverity(val level: Int) {
     NEAR_MISS(1),
     MINOR(2),
-    SERIOUS(3);
+    MODERATE(3),
+    SERIOUS(4),
+    CRITICAL(5);
 
     companion object {
         /** Unknown levels are treated as the most severe, never the least. */
         fun fromLevel(level: Int): IncidentSeverity =
-            entries.firstOrNull { it.level == level } ?: SERIOUS
+            entries.firstOrNull { it.level == level } ?: CRITICAL
     }
 }
 
-/** A row of the INCIDENT_REPORTS table. Every incident hangs off an inspection. */
+/**
+ * A row of the INCIDENT_REPORTS table. Every incident hangs off an inspection.
+ *
+ * [photoUris] is not in the ERD yet — see "Fields beyond the ERD" in
+ * docs/ARCHITECTURE.md.
+ */
 data class IncidentReport(
     val incidentId: Int,
     val inspectionId: Int,
     val severityLevel: Int,
     val description: String,
-    val dateReported: LocalDateTime
+    val dateReported: LocalDateTime,
+    val photoUris: List<String> = emptyList()
 ) {
     val severity: IncidentSeverity get() = IncidentSeverity.fromLevel(severityLevel)
 }

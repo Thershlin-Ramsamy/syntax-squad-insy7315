@@ -6,7 +6,10 @@ import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.AcUnit
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.filled.CloudDone
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.CloudSync
@@ -18,6 +21,9 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.ReportProblem
 import androidx.compose.material.icons.filled.SupervisorAccount
+import androidx.compose.material.icons.filled.Thermostat
+import androidx.compose.material.icons.filled.WaterDrop
+import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.mcc.construction.R
 import com.mcc.construction.data.model.IncidentSeverity
@@ -31,6 +37,7 @@ import com.mcc.construction.data.model.SyncState
 import com.mcc.construction.data.model.TaskPriority
 import com.mcc.construction.data.model.TaskStatus
 import com.mcc.construction.data.model.UserRole
+import com.mcc.construction.data.model.Weather
 import com.mcc.construction.ui.theme.Tone
 
 /*
@@ -161,14 +168,39 @@ val IncidentSeverity.labelRes: Int
     get() = when (this) {
         IncidentSeverity.NEAR_MISS -> R.string.incident_near_miss
         IncidentSeverity.MINOR -> R.string.incident_minor
+        IncidentSeverity.MODERATE -> R.string.incident_moderate
         IncidentSeverity.SERIOUS -> R.string.incident_serious
+        IncidentSeverity.CRITICAL -> R.string.incident_critical
     }
 
 val IncidentSeverity.tone: Tone
     get() = when (this) {
         IncidentSeverity.NEAR_MISS -> Tone.Neutral
-        IncidentSeverity.MINOR -> Tone.Warning
+        IncidentSeverity.MINOR -> Tone.Info
+        IncidentSeverity.MODERATE -> Tone.Warning
         IncidentSeverity.SERIOUS -> Tone.Danger
+        IncidentSeverity.CRITICAL -> Tone.Danger
+    }
+
+@get:StringRes
+val Weather.labelRes: Int
+    get() = when (this) {
+        Weather.SUNNY -> R.string.weather_sunny
+        Weather.CLOUDY -> R.string.weather_cloudy
+        Weather.RAINY -> R.string.weather_rainy
+        Weather.WINDY -> R.string.weather_windy
+        Weather.HOT -> R.string.weather_hot
+        Weather.COLD -> R.string.weather_cold
+    }
+
+val Weather.icon: ImageVector
+    get() = when (this) {
+        Weather.SUNNY -> Icons.Filled.WbSunny
+        Weather.CLOUDY -> Icons.Filled.Cloud
+        Weather.RAINY -> Icons.Filled.WaterDrop
+        Weather.WINDY -> Icons.Filled.Air
+        Weather.HOT -> Icons.Filled.Thermostat
+        Weather.COLD -> Icons.Filled.AcUnit
     }
 
 // ---------------------------------------------------------------------------

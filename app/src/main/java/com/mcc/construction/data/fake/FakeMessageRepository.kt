@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 
@@ -31,7 +32,11 @@ class FakeMessageRepository(
                 .mapNotNull { (otherUserId, thread) ->
                     val participant = userList.firstOrNull { it.userId == otherUserId }
                         ?: return@mapNotNull null
-                    Conversation(participant, thread.maxBy { it.timestamp })
+                    Conversation(
+                        participant = participant,
+                        lastMessage = thread.maxBy { it.timestamp },
+                        unreadCount = thread.count { it.receiverId == userId && !it.isRead }
+                    )
                 }
                 .sortedByDescending { it.lastMessage.timestamp }
         }
@@ -50,7 +55,8 @@ class FakeMessageRepository(
             senderId = senderId,
             receiverId = receiverId,
             content = content,
-            timestamp = LocalDateTime.now(clock)
+            timestamp = LocalDateTime.now(clock),
+            isRead = false
         )
         messages.update { it + message }
         sync.recordChange(
@@ -58,5 +64,21 @@ class FakeMessageRepository(
             users.findUser(receiverId)?.fullName.orEmpty()
         )
         return message
+    }
+
+    override fun observeUnreadCount(userId: Int): Flow<Int> =
+        messages.map { list -> list.count { it.receiverId == userId && !it.isRead } }
+            .distinctUntilChanged()
+
+    override suspend fun markThreadRead(userId: Int, otherUserId: Int) {
+        messages.update { list ->
+            list.map {
+                if (it.receiverId == userId && it.senderId == otherUserId && !it.isRead) {
+                    it.copy(isRead = true)
+                } else {
+                    it
+                }
+            }
+        }
     }
 }
