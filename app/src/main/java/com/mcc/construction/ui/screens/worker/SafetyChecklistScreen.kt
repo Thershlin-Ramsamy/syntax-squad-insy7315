@@ -106,7 +106,7 @@ fun SafetyChecklistScreen(navController: NavHostController) {
 }
 
 /**
- * Whole row is the touch target rather than just a checkbox — CLAUDE.md calls
+ * Whole row is the touch target rather than just a checkbox — the design notes call
  * for controls usable in gloves, and a 20dp checkbox is not.
  */
 @Composable

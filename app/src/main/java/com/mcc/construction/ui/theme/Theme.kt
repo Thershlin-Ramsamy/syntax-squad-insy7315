@@ -30,7 +30,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimaryContainer = InfoInk,
     inversePrimary = Navy300,
 
-    secondary = ConstructionOrange,
+    secondary = ConstructionGold,
     onSecondary = Ink900,
     secondaryContainer = WarningContainer,
     onSecondaryContainer = WarningInk,
@@ -69,8 +69,8 @@ private val DarkColorScheme = darkColorScheme(
     onPrimaryContainer = InfoInkDark,
     inversePrimary = NavyBlue,
 
-    secondary = ConstructionOrange,
-    onSecondary = OnOrangeInk,
+    secondary = ConstructionGold,
+    onSecondary = OnGoldInk,
     secondaryContainer = WarningContainerDark,
     onSecondaryContainer = WarningInkDark,
 
@@ -120,7 +120,7 @@ fun MCCConstructionTheme(
     content: @Composable () -> Unit
 ) {
     // Dynamic colour is deliberately not offered. This is a branded corporate
-    // app: MCC's navy/orange must survive whatever wallpaper the device has.
+    // app: MCC's navy and gold must survive whatever wallpaper the device has.
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
 
     MaterialTheme(

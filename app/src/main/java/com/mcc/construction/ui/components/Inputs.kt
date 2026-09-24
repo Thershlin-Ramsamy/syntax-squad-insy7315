@@ -37,7 +37,7 @@ import com.mcc.construction.ui.theme.Spacing
 
 /**
  * Primary action. Navy, full width, [Spacing.minTouch] tall — sized for gloved
- * hands per the CLAUDE.md design notes.
+ * hands, per the project design notes.
  */
 @Composable
 fun PrimaryButton(
@@ -65,7 +65,7 @@ fun PrimaryButton(
 
 /**
  * Reserved for the single most important action on a screen — clock in, submit
- * report. Orange is the loudest colour in the palette, so no screen gets two.
+ * report. Gold is the loudest colour in the palette, so no screen gets two.
  */
 @Composable
 fun AccentButton(

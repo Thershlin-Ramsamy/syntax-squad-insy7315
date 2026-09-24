@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.sp
 /*
  * Type scale.
  *
- * Anchored on CLAUDE.md's brand sizes — heading 24sp bold, subheading 20sp,
+ * Anchored on the brand guide's sizes — heading 24sp bold, subheading 20sp,
  * body 16sp — and extended into a full hierarchy.
  *
  * Two deliberate choices:

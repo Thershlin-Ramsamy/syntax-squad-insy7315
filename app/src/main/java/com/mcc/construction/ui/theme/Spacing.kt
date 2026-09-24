@@ -10,8 +10,9 @@ import androidx.compose.ui.unit.dp
  * and [sectionGap] between unrelated sections. Restricting the vocabulary to
  * three intervals is what makes independently-written screens feel like one app.
  *
- * [minTouch] is 56dp rather than the usual Material 48dp: CLAUDE.md notes workers
- * may be wearing gloves, so primary controls get a larger target.
+ * Touch targets come in two sizes because workers may be wearing gloves:
+ * [touchTarget] (48dp) is the floor for anything tappable, and [minTouch]
+ * (56dp) is used for primary actions such as sign in, clock in and submit.
  */
 object Spacing {
     val xxs = 2.dp
@@ -38,9 +39,21 @@ object Spacing {
     /** Between two unrelated sections. */
     val sectionGap = 28.dp
 
+    /** Smallest size for anything tappable — icon buttons, rows, chips. */
+    val touchTarget = 48.dp
+
     /** Minimum height for a primary, gloved-hand touch target. */
     val minTouch = 56.dp
 
     /** Standard height for a list row. */
     val rowHeight = 72.dp
+
+    /**
+     * Widest a column of content grows on a desktop-width window. Past this,
+     * lines get too long to scan, so content centres instead of stretching.
+     */
+    val contentMaxWidth = 840.dp
+
+    /** Widest a single-column form (sign in, reset password) grows. */
+    val formMaxWidth = 480.dp
 }

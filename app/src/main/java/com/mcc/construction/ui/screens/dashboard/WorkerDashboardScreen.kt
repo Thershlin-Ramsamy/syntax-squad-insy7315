@@ -44,7 +44,7 @@ import com.mcc.construction.ui.tone
  *
  * Ordered by what a worker needs in the first five seconds on site: who they
  * are and where, the two figures that matter, then the single largest control
- * on the screen — clock in. Detail lists come after. CLAUDE.md asks for worker
+ * on the screen — clock in. Detail lists come after. The design notes ask for worker
  * flows in three taps or fewer, and every action here is one.
  */
 @Composable

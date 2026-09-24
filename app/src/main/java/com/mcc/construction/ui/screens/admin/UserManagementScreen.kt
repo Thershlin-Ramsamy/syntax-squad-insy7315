@@ -48,7 +48,7 @@ private const val ALL = "All"
 /**
  * User management.
  *
- * The two administrator actions CLAUDE.md calls for — changing a role and
+ * The two administrator actions the brief calls for — changing a role and
  * suspending an account — are performed inline on the card rather than behind a
  * detail screen, because both are one-decision changes and the list is short.
  * Both write through [MockRepository], so the effect is visible immediately and

@@ -33,7 +33,7 @@ import androidx.navigation.NavHostController
 import com.mcc.construction.R
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.theme.BrandWhite
-import com.mcc.construction.ui.theme.ConstructionOrange
+import com.mcc.construction.ui.theme.ConstructionGold
 import com.mcc.construction.ui.theme.Ink500
 import com.mcc.construction.ui.theme.NavyBlue
 import com.mcc.construction.ui.theme.Spacing
@@ -104,7 +104,7 @@ fun SplashScreen(navController: NavHostController) {
                 modifier = Modifier
                     .width(140.dp)
                     .height(4.dp),
-                color = ConstructionOrange,
+                color = ConstructionGold,
                 trackColor = NavyBlue.copy(alpha = 0.14f)
             )
         }
