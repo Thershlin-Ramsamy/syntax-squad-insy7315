@@ -22,8 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import com.mcc.construction.data.AuditSeverity
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.AuditSeverity
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.EmptyState
 import com.mcc.construction.ui.components.Eyebrow

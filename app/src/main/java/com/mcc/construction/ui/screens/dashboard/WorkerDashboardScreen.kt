@@ -23,8 +23,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.TaskStatus
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.TaskStatus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.AccentButton
 import com.mcc.construction.ui.components.Banner
@@ -44,7 +44,7 @@ import com.mcc.construction.ui.tone
  *
  * Ordered by what a worker needs in the first five seconds on site: who they
  * are and where, the two figures that matter, then the single largest control
- * on the screen — clock in. Detail lists come after. CLAUDE.md asks for worker
+ * on the screen — clock in. Detail lists come after. The design notes ask for worker
  * flows in three taps or fewer, and every action here is one.
  */
 @Composable

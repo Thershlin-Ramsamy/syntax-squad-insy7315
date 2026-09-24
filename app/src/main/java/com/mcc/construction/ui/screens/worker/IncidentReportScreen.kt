@@ -16,8 +16,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.IncidentSeverity
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.IncidentSeverity
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.AppTextField
 import com.mcc.construction.ui.components.Banner
 import com.mcc.construction.ui.components.DetailScaffold

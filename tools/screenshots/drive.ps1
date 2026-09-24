@@ -120,9 +120,8 @@ function Get-Tree {
     return $null
 }
 
-# Nodes matching $Text. CASE-SENSITIVE by default, clickable nodes first:
-# the login screen has both a "Sign in" heading and a "Sign In" button, and a
-# case-insensitive match taps the heading and does nothing.
+# Nodes matching $Text. CASE-SENSITIVE by default, clickable nodes first, then
+# in screen order — see Sign-In for a screen where that order matters.
 function Find-Nodes($Text, [switch]$Exact, [switch]$IgnoreCase) {
     $tree = Get-Tree
     if (-not $tree) { return @() }
@@ -275,39 +274,23 @@ function Expect($Text) {
     Write-Host "  !! EXPECTED '$Text' NOT FOUND"; return $false
 }
 
-function Sign-In($Role, $User) {
-    Tap-Text "s.dlamini" 0 1500 | Out-Null     # the placeholder, not the "Username" label
-    Type-Text $User
-
-    # Reach the password field with TAB instead of tapping it. On a short
-    # window the IME covers that field, so the tap lands on the keyboard, focus
-    # never moves, and the password is appended to the username — the field
-    # ends up holding "s.dlaminisitepass1", Sign In does nothing, and the run
-    # carries on screenshotting the login screen. Tapping reported success the
-    # whole time, which is why this needs to not depend on a tap at all.
-    A shell input keyevent 61 | Out-Null
-    Start-Sleep -Milliseconds 700
-    Type-Text "sitepass1"
-
+function Sign-In($Role) {
+    # One tap on the demo account card fills in both the email and a password,
+    # so nothing is typed and the IME never gets in the way. $Role is the card
+    # label: "Worker", "Manager" or "Administrator" — the same text at every
+    # window size.
     Hide-Keyboard
-    # Role cards show label + blurb at full size, but a short window uses the
-    # compact layout, which drops the blurb and leaves only the label. Callers
-    # pass the blurb because it is unambiguous; fall back to the label so the
-    # same call works at desktop width, where matching the blurb finds nothing
-    # and the run silently proceeds as the wrong role.
-    if (-not (Tap-Text $Role 0 1000)) {
-        $label = switch -Wildcard ($Role) {
-            "Today's tasks*"   { "Worker" }
-            "Projects, teams*" { "Manager" }
-            "Users, settings*" { "Administrator" }
-            default            { $Role }
-        }
-        Tap-Text $label 0 1000 -Exact | Out-Null
+    if (-not (Tap-Text $Role 0 1000 -Exact)) {
+        Scroll-Down 1
+        Tap-Text $Role 0 1000 -Exact | Out-Null
     }
 
-    if (-not (Tap-Text "Sign In" 0 3000 -Exact)) {
-        Scroll-Down 1
-        Tap-Text "Sign In" 0 3000 -Exact | Out-Null
+    # The screen has a "Sign in" heading and a "Sign in" button. Neither text
+    # node is itself clickable, so they come back in screen order: the heading
+    # first, the button second.
+    if (-not (Tap-Text "Sign in" 1 3000 -Exact)) {
+        Scroll-Top
+        Tap-Text "Sign in" 1 3000 -Exact | Out-Null
     }
 }
 

@@ -10,7 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.mcc.construction.data.Project
+import com.mcc.construction.data.legacy.Project
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Eyebrow
 import com.mcc.construction.ui.components.ProgressTrack

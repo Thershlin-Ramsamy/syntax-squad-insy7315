@@ -1,5 +1,14 @@
 package com.mcc.construction.navigation
 
+/**
+ * Every route in the app. One constant per screen in the screen list, plus the
+ * administrator screens.
+ *
+ * To add a screen: add its route here, add a `composable(...)` entry in
+ * [AppNavHost] (a [com.mcc.construction.ui.components.PlaceholderScreen] is
+ * fine to start with), and — if it belongs in the navigation bar or rail — an
+ * item in [NavMenus].
+ */
 object Routes {
     // Entry
     const val SPLASH = "splash"
@@ -12,6 +21,7 @@ object Routes {
     const val SETTINGS = "settings"
     const val SYNC_STATUS = "sync_status"
     const val DOCUMENTS = "documents"
+    const val MESSAGES = "messages"
 
     // Worker
     const val WORKER_DASHBOARD = "worker_dashboard"
@@ -20,19 +30,21 @@ object Routes {
     const val DAILY_REPORT = "daily_report"
     const val SAFETY_CHECKLIST = "safety_checklist"
     const val INCIDENT_REPORT = "incident_report"
-    const val MESSAGES = "messages"
 
     // Manager
     const val MANAGER_DASHBOARD = "manager_dashboard"
     const val PROJECTS = "projects"
     const val EMPLOYEES = "employees"
     const val INVENTORY = "inventory"
+
+    /** Reports history: submitted daily reports and incidents. */
     const val REPORTS = "reports"
 
     // Administrator
     const val ADMIN_DASHBOARD = "admin_dashboard"
     const val USER_MANAGEMENT = "user_management"
     const val AUDIT_LOG = "audit_log"
+    const val SYSTEM_SETTINGS = "system_settings"
 
     // Parameterised detail routes
     const val TASK_DETAIL_PATTERN = "task_detail/{taskId}"
@@ -52,4 +64,7 @@ object Routes {
     fun employeeProfile(id: String) = "employee_profile/$id"
     fun materialDetail(id: String) = "material_detail/$id"
     fun chat(id: String) = "chat/$id"
+
+    /** Routes that can be shown without a signed-in user. */
+    val public: Set<String> = setOf(SPLASH, LOGIN, FORGOT_PASSWORD)
 }

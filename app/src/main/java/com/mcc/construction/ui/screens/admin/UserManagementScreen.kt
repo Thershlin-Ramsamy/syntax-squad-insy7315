@@ -29,10 +29,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.mcc.construction.data.AccountStatus
-import com.mcc.construction.data.ManagedUser
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.UserRole
+import com.mcc.construction.data.legacy.AccountStatus
+import com.mcc.construction.data.legacy.ManagedUser
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.label
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.Avatar
 import com.mcc.construction.ui.components.EmptyState
@@ -47,7 +48,7 @@ private const val ALL = "All"
 /**
  * User management.
  *
- * The two administrator actions CLAUDE.md calls for — changing a role and
+ * The two administrator actions the brief calls for — changing a role and
  * suspending an account — are performed inline on the card rather than behind a
  * detail screen, because both are one-decision changes and the list is short.
  * Both write through [MockRepository], so the effect is visible immediately and

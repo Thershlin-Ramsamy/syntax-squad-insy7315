@@ -5,7 +5,7 @@ import androidx.compose.ui.graphics.Color
 /*
  * Colour system.
  *
- * The six brand tokens from CLAUDE.md are the fixed points. Navy and gold are
+ * The six brand tokens from the brand guide are the fixed points. Navy and gold are
  * sampled directly from the client's logo, so the app and the printed lockup
  * match. Everything else is a derived neutral ramp or a semantic "tone" pair.
  *
@@ -22,14 +22,17 @@ import androidx.compose.ui.graphics.Color
  */
 
 // ---------------------------------------------------------------------------
-// Brand tokens (CLAUDE.md) — navy and gold sampled from the MCC logo
+// Brand tokens — navy and gold sampled from the MCC logo
 // ---------------------------------------------------------------------------
-val NavyBlue = Color(0xFF173061)
-val ConstructionOrange = Color(0xFFDEAC2D)
-val BrandWhite = Color(0xFFFFFFFF)
-val CardGrey = Color(0xFFF4F4F4)
-val SuccessGreen = Color(0xFF28A745)
-val DangerRed = Color(0xFFDC3545)
+// These six values are the source of truth for the brand. Screens should not
+// reference them directly: use MaterialTheme.colorScheme (primary = navy,
+// secondary = gold) or a Tone, so dark theme and status colours stay correct.
+val NavyBlue = Color(0xFF173061) // Primary
+val ConstructionGold = Color(0xFFDEAC2D) // Accent
+val BrandWhite = Color(0xFFFFFFFF) // Background
+val CardGrey = Color(0xFFF4F4F4) // Card background
+val SuccessGreen = Color(0xFF28A745) // Success
+val DangerRed = Color(0xFFDC3545) // Error / danger
 
 // ---------------------------------------------------------------------------
 // Neutral ramp — high contrast for outdoor legibility
@@ -45,7 +48,7 @@ val SurfaceHigh = Color(0xFFF0F2F5)
 val SurfaceHighest = Color(0xFFE9ECF0)
 
 // "On" colours for saturated brand fills
-val OnOrangeInk = Color(0xFF231B03)
+val OnGoldInk = Color(0xFF231B03)
 val OnSuccessInk = Color(0xFF00210B)
 val OnDangerInk = Color(0xFF5F1219)
 
@@ -67,7 +70,7 @@ val SuccessFigure = SuccessGreen
 val SuccessInk = Color(0xFF1B7A32)
 
 val WarningContainer = Color(0xFFFBF2DC)
-val WarningFigure = ConstructionOrange
+val WarningFigure = ConstructionGold
 val WarningInk = Color(0xFF8A6910)
 
 val DangerContainer = Color(0xFFFBE9EB)

@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.AppCard
 import com.mcc.construction.ui.components.AppTextField
 import com.mcc.construction.ui.components.Banner

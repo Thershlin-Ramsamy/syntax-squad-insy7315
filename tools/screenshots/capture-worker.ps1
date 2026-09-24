@@ -18,7 +18,7 @@ Start-Sleep -Seconds 4
 Expect "Sign in" | Out-Null
 Shot "$P-02-login"
 
-Tap-Text "Sign In" 0 1500 -Exact | Out-Null      # submit empty to show validation
+Tap-Text "Sign in" 1 1500 -Exact | Out-Null      # submit empty to show validation
 Hide-Keyboard
 Shot "$P-03-login-validation-error"
 
@@ -29,8 +29,8 @@ Go-Back
 Start-Sleep -Seconds 1
 
 Write-Host "== worker =="
-Expect "Continue as" | Out-Null
-Sign-In "Today's tasks" "s.dlamini"
+Expect "Demo accounts" | Out-Null
+Sign-In "Worker"
 Expect "Good morning" | Out-Null
 Shot "$P-05-worker-dashboard"
 
@@ -46,7 +46,10 @@ Expect "Task details" | Out-Null
 Shot "$P-08-task-detail"
 Go-Back
 
-Tap-Text "Attendance" 0 2000 | Out-Null
+# Attendance is on the rail at wider sizes; on a phone it is one of the
+# Profile shortcuts.
+Tap-Text "Profile" 0 2000 -Exact | Out-Null
+Tap-Text "Attendance" 0 2000 -Exact | Out-Null
 Shot "$P-09-attendance"
 
 Tap-Text "Clock In" 0 2000 | Out-Null
@@ -59,8 +62,8 @@ Tap-Text "Johan Botha" 0 2200 | Out-Null
 Shot "$P-12-chat"
 Go-Back
 
-Tap-Text "Profile" 0 2000 | Out-Null
-Expect "Employee ID" | Out-Null
+Tap-Text "Profile" 0 2000 -Exact | Out-Null
+Expect "Employee no." | Out-Null
 Shot "$P-13-profile"
 
 Scroll-Down 2

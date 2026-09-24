@@ -28,8 +28,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.ChecklistItem
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.ChecklistItem
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.Banner
 import com.mcc.construction.ui.components.PrimaryButton
 import com.mcc.construction.ui.components.ProgressTrack
@@ -106,7 +106,7 @@ fun SafetyChecklistScreen(navController: NavHostController) {
 }
 
 /**
- * Whole row is the touch target rather than just a checkbox — CLAUDE.md calls
+ * Whole row is the touch target rather than just a checkbox — the design notes call
  * for controls usable in gloves, and a 20dp checkbox is not.
  */
 @Composable

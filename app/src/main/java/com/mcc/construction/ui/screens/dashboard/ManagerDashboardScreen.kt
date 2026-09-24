@@ -21,11 +21,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.EmployeeStatus
-import com.mcc.construction.data.MockRepository
-import com.mcc.construction.data.ProjectStatus
-import com.mcc.construction.data.StockLevel
-import com.mcc.construction.data.TaskStatus
+import com.mcc.construction.data.legacy.EmployeeStatus
+import com.mcc.construction.data.legacy.MockRepository
+import com.mcc.construction.data.legacy.ProjectStatus
+import com.mcc.construction.data.legacy.StockLevel
+import com.mcc.construction.data.legacy.TaskStatus
 import com.mcc.construction.navigation.Routes
 import com.mcc.construction.ui.components.Banner
 import com.mcc.construction.ui.components.LeadingIcon

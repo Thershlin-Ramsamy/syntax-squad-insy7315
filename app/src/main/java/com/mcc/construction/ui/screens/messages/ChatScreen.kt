@@ -37,8 +37,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.mcc.construction.data.ChatMessage
-import com.mcc.construction.data.MockRepository
+import com.mcc.construction.data.legacy.ChatMessage
+import com.mcc.construction.data.legacy.MockRepository
 import com.mcc.construction.ui.components.DetailScaffold
 import com.mcc.construction.ui.theme.Spacing
 

@@ -20,7 +20,7 @@ Start-Sleep -Seconds 4
 Expect "Sign in" | Out-Null
 Shot "$P-01-login"
 
-Sign-In "Today's tasks" "s.dlamini"
+Sign-In "Worker"
 Expect "Good morning" | Out-Null
 Shot "$P-02-worker-dashboard"
 
@@ -37,7 +37,7 @@ Shot "$P-05-attendance"
 Write-Host "== $P : manager =="
 Restart-App
 Start-Sleep -Seconds 4
-Sign-In "Projects, teams" "n.khumalo"
+Sign-In "Manager"
 Expect "Good morning" | Out-Null
 Shot "$P-06-manager-dashboard"
 

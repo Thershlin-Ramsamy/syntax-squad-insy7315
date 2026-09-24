@@ -16,10 +16,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -30,14 +36,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.error
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.mcc.construction.ui.preview.PreviewSurface
 import com.mcc.construction.ui.theme.Spacing
+import com.mcc.construction.ui.theme.Tone
+import com.mcc.construction.ui.theme.colors
 
 /**
- * Primary action. Navy, full width, [Spacing.minTouch] tall — sized for gloved
- * hands per the CLAUDE.md design notes.
+ * The primary action button. Navy, full width, [Spacing.minTouch] tall — sized
+ * for gloved hands, per the project design notes.
+ *
+ * While [loading] is true a spinner replaces the icon and taps are ignored, but
+ * the button keeps its colour: greying it out mid-request reads as "you can't
+ * do this" rather than "working on it".
  */
 @Composable
 fun PrimaryButton(
@@ -45,17 +62,25 @@ fun PrimaryButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
     Button(
-        onClick = onClick,
+        onClick = { if (!loading) onClick() },
         enabled = enabled,
         shape = MaterialTheme.shapes.large,
         modifier = modifier
             .fillMaxWidth()
             .height(Spacing.minTouch)
     ) {
-        if (icon != null) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(20.dp),
+                color = LocalContentColor.current,
+                strokeWidth = 2.dp
+            )
+            Spacer(Modifier.width(Spacing.md))
+        } else if (icon != null) {
             Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Spacer(Modifier.width(Spacing.sm))
         }
@@ -65,7 +90,7 @@ fun PrimaryButton(
 
 /**
  * Reserved for the single most important action on a screen — clock in, submit
- * report. Orange is the loudest colour in the palette, so no screen gets two.
+ * report. Gold is the loudest colour in the palette, so no screen gets two.
  */
 @Composable
 fun AccentButton(
@@ -113,7 +138,13 @@ fun SecondaryButton(
     }
 }
 
-/** Text field with a label above it rather than a floating placeholder. */
+/**
+ * Text field with a label above it rather than a floating placeholder.
+ *
+ * When [isError] is set, [supportingText] is shown as the error — with an icon,
+ * so it does not rely on red alone — and read out by screen readers.
+ * [onImeAction] runs when the keyboard's action key (Next, Done) is pressed.
+ */
 @Composable
 fun AppTextField(
     value: String,
@@ -128,7 +159,10 @@ fun AppTextField(
     singleLine: Boolean = true,
     minLines: Int = 1,
     isError: Boolean = false,
-    supportingText: String? = null
+    supportingText: String? = null,
+    enabled: Boolean = true,
+    imeAction: ImeAction = ImeAction.Default,
+    onImeAction: (() -> Unit)? = null
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
@@ -154,9 +188,11 @@ fun AppTextField(
             singleLine = singleLine,
             minLines = minLines,
             isError = isError,
+            enabled = enabled,
             shape = MaterialTheme.shapes.medium,
             textStyle = MaterialTheme.typography.bodyLarge,
-            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+            keyboardActions = KeyboardActions(onAny = { onImeAction?.invoke() }),
             visualTransformation = visualTransformation,
             colors = OutlinedTextFieldDefaults.colors(
                 unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
@@ -165,14 +201,33 @@ fun AppTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = if (singleLine) Spacing.minTouch else 96.dp)
+                .semantics { if (isError && supportingText != null) error(supportingText) }
         )
-        if (supportingText != null) {
+        if (supportingText != null && isError) {
+            // Danger ink rather than the raw brand red: darker, so the message
+            // still reads in direct sunlight.
+            val errorInk = Tone.Danger.colors().ink
+            Spacer(Modifier.height(Spacing.sm))
+            Row(verticalAlignment = Alignment.Top) {
+                Icon(
+                    imageVector = Icons.Filled.Error,
+                    contentDescription = null,
+                    tint = errorInk,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(Modifier.width(Spacing.sm))
+                Text(
+                    text = supportingText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = errorInk
+                )
+            }
+        } else if (supportingText != null) {
             Spacer(Modifier.height(Spacing.xs))
             Text(
                 text = supportingText,
                 style = MaterialTheme.typography.bodySmall,
-                color = if (isError) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -223,6 +278,22 @@ fun SegmentedFilter(
                     else MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+        }
+    }
+}
+
+@Preview(showBackground = true, widthDp = 360)
+@Composable
+private fun ButtonsPreview() {
+    PreviewSurface {
+        Column(
+            modifier = Modifier.padding(Spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(Spacing.md)
+        ) {
+            PrimaryButton(text = "Sign in", onClick = {}, icon = Icons.AutoMirrored.Filled.Login)
+            PrimaryButton(text = "Signing in…", onClick = {}, loading = true)
+            AccentButton(text = "Clock in", onClick = {})
+            SecondaryButton(text = "Simulate going offline", onClick = {})
         }
     }
 }
