@@ -11,10 +11,11 @@ import androidx.navigation.navArgument
 import com.mcc.construction.R
 import com.mcc.construction.data.model.NotificationType
 import com.mcc.construction.data.model.UserRole
-import com.mcc.construction.ui.components.PlaceholderScreen
-import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
-import com.mcc.construction.ui.screens.admin.AuditLogScreen
-import com.mcc.construction.ui.screens.admin.UserManagementScreen
+import com.mcc.construction.ui.screens.admin.AdminDashboardRoute
+import com.mcc.construction.ui.screens.admin.AdminDestination
+import com.mcc.construction.ui.screens.admin.AuditLogRoute
+import com.mcc.construction.ui.screens.admin.SystemSettingsRoute
+import com.mcc.construction.ui.screens.admin.UserManagementRoute
 import com.mcc.construction.ui.screens.dashboard.WorkerDashboardRoute
 import com.mcc.construction.ui.screens.dashboard.WorkerDestination
 import com.mcc.construction.ui.screens.dashboard.ManagerDashboardRoute
@@ -50,11 +51,10 @@ import com.mcc.construction.ui.screens.worker.SafetyChecklistRoute
 /**
  * The navigation graph: one entry per screen.
  *
- * Screens built on the repository layer are added as their `…Route`
- * composable, which creates the screen's ViewModel and turns its callbacks into
- * navigation. Screens still on the legacy MockRepository take the
- * NavController directly until they are migrated. A screen that has a route
- * but no content yet uses [PlaceholderScreen].
+ * Each screen is added as its `…Route` composable, which creates the
+ * screen's ViewModel and turns its callbacks into navigation. A new screen
+ * that has a route but no content yet can use
+ * [com.mcc.construction.ui.components.PlaceholderScreen].
  */
 @Composable
 fun AppNavHost(
@@ -201,12 +201,12 @@ fun AppNavHost(
         composable(Routes.REPORTS) { ReportsRoute() }
 
         // --- Administrator -------------------------------------------------
-        composable(Routes.ADMIN_DASHBOARD) { AdminDashboardScreen(navController) }
-        composable(Routes.USER_MANAGEMENT) { UserManagementScreen() }
-        composable(Routes.AUDIT_LOG) { AuditLogScreen() }
-        composable(Routes.SYSTEM_SETTINGS) {
-            PlaceholderScreen(title = stringResource(R.string.title_system_settings))
+        composable(Routes.ADMIN_DASHBOARD) {
+            AdminDashboardRoute(onNavigate = { destination -> navController.navigate(destination.route) })
         }
+        composable(Routes.USER_MANAGEMENT) { UserManagementRoute() }
+        composable(Routes.AUDIT_LOG) { AuditLogRoute() }
+        composable(Routes.SYSTEM_SETTINGS) { SystemSettingsRoute() }
 
         // --- Detail routes -------------------------------------------------
         composable(
@@ -308,6 +308,15 @@ private val ManagerDestination.route: String
         ManagerDestination.Reports -> Routes.REPORTS
         ManagerDestination.Documents -> Routes.DOCUMENTS
         ManagerDestination.Notifications -> Routes.NOTIFICATIONS
+    }
+
+private val AdminDestination.route: String
+    get() = when (this) {
+        AdminDestination.USERS -> Routes.USER_MANAGEMENT
+        AdminDestination.AUDIT_LOG -> Routes.AUDIT_LOG
+        AdminDestination.SYSTEM_SETTINGS -> Routes.SYSTEM_SETTINGS
+        AdminDestination.SYNC -> Routes.SYNC_STATUS
+        AdminDestination.EMPLOYEES -> Routes.EMPLOYEES
     }
 
 private val ProfileShortcut.route: String

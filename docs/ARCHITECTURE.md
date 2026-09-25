@@ -38,8 +38,7 @@ com.mcc.construction
 ├── data/
 │   ├── model/                 Domain models, one file per area, matching the ERD
 │   ├── repository/            Repository interfaces — what the UI may ask for
-│   ├── fake/                  In-memory implementations + FakeSeedData + FakeAppContainer
-│   └── legacy/                First-pass MockRepository, kept until every screen is migrated
+│   └── fake/                  In-memory implementations + FakeSeedData + FakeAppContainer
 ├── navigation/
 │   ├── Routes.kt              A route constant for every screen
 │   ├── NavItem.kt             NavMenus: which items each role sees, app bar titles
@@ -83,19 +82,20 @@ when data changes; writes are `suspend` functions.
 | Repository | Covers |
 |---|---|
 | `AuthRepository` | Sign in / out, password reset, the current `UserSession` (user + role) |
-| `UserRepository` | Users and roles, role assignment |
+| `UserRepository` | Users and roles, role assignment, suspending and restoring accounts |
 | `ProjectRepository` | Projects |
-| `TaskRepository` | Tasks and their assignments, status updates |
-| `AttendanceRepository` | Shifts, clock in / clock out |
+| `TaskRepository` | Creating tasks, assigning them, status updates |
+| `AttendanceRepository` | Shifts, clock in / clock out, everyone's shifts on a day |
 | `DailyReportRepository` | Submitting and approving daily reports |
 | `InventoryRepository` | Materials, stock adjustments, suppliers |
-| `DocumentRepository` | Project documents |
+| `DocumentRepository` | Project documents, uploading a new document or version |
 | `SafetyRepository` | Checklist items, inspections, incident reports |
 | `NotificationRepository` | Notifications, unread count, mark as read |
 | `MessageRepository` | Conversations and direct messages |
-| `AuditLogRepository` | Administrator audit trail |
+| `AuditLogRepository` | Audit trail of administrative changes |
 | `SyncRepository` | Online / offline, offline mode, the upload queue, sync now, history |
 | `SettingsRepository` | On-device preferences |
+| `SystemSettingsRepository` | Organisation-wide settings changed by administrators |
 
 ### Fakes (`data/fake`)
 
@@ -110,6 +110,21 @@ while the app is offline also land in the sync queue, so the offline path can
 be demonstrated end to end: switch on **Offline mode** (Settings or the Offline
 & sync screen), clock in or update a task, watch the indicator count go up,
 switch offline mode off and tap **Sync now**.
+
+The fakes also send the notifications the server will send, through
+`FakeNotifier`, so the manager–worker loop works on one device:
+
+1. A manager assigns a task (Project Details → **Assign a task**).
+   `TaskRepository.createTask` and `assignTask` add it, and each assigned
+   worker gets a notification.
+2. The worker signs in, sees the notification and the task, and starts it.
+3. `updateStatus` notifies the project's manager ("Sipho Dlamini started …"),
+   and the manager dashboard's **Latest updates** and task counts change.
+
+The same goes for approving a daily report (the author is told), a failed
+checklist or incident (the project manager is told) and stock falling below
+its minimum. Nobody is notified about their own actions. Role changes,
+suspensions and system settings are written to the audit log.
 
 ### Wiring (`di/AppContainer`)
 
@@ -140,8 +155,8 @@ The sign-in screen lists them, so a role can be picked in one tap.
 
 ## How to add a new screen
 
-Most screens already have a route. If yours shows a `PlaceholderScreen` (or
-still reads `MockRepository`), you are replacing it — same steps.
+Every screen in the screen list is built. For a new one, add its route first
+(a `PlaceholderScreen` is fine while you work), then follow these steps.
 
 ### 1. State and ViewModel
 
@@ -269,6 +284,8 @@ private fun TaskListScreenPreview() {
 | `ChoiceChip`, `ChoiceChipGroup` | Large, glove-friendly picks — use instead of a text field whenever the answer is one of a few options. |
 | `PhotoAttachmentRow`, `rememberPhotoPicker` | Photo thumbnails with an "Add photo" tile, and the Android photo picker behind it (no storage permission needed). |
 | `ActionFeedbackHost` | Wraps a screen and shows its `UiMessage` as a snackbar — every action gets a visible confirmation or error. |
+| `ListDetailLayout`, `selectedOutline` | A list with a detail pane beside it on wide windows, and the outline that marks the open item. |
+| `SearchField` | A search box with a clear button, for filtering a list as you type. |
 
 ViewModels report one-off feedback as a `UiMessage` (in `ui/common`) — a
 string resource plus arguments, so ViewModels stay free of Android resources —
@@ -312,10 +329,13 @@ measuring:
 if (LocalWindowLayout.current.isExpanded) TwoColumns() else OneColumn()
 ```
 
-`ProfileScreen`, `SyncStatusScreen` and the worker dashboard are working
-examples. For list-and-detail screens, the task list and the chat list keep a
-detail pane beside the list on expanded windows instead of pushing a new
-screen — see `TaskListRoute`'s `detailPane` and `MessagesRoute`'s `chatPane`.
+The dashboards, Project Details and Employee Profile are working examples.
+For list-and-detail screens — tasks, messages, projects, employees, inventory,
+reports and user management — the list keeps a detail pane beside it on
+expanded windows instead of pushing a new screen. `ListDetailLayout` does the
+layout; the route passes a `detailPane` that shows the detail screen with
+`embedded = true` (no app bar of its own, one column). See
+`ProjectListRoute` in `AppNavHost`.
 
 To see it live, run the app and resize the emulator window, or use Android
 Studio's resizable device. The screenshot tooling can also force a width with
@@ -340,27 +360,6 @@ Studio's resizable device. The screenshot tooling can also force a width with
 - **Workers wear gloves:** icon-first, large targets, as little typing as
   possible, and keep worker flows to three taps or fewer.
 
-## Migrating a legacy screen
-
-Screens that still take a `NavController` and read `MockRepository` (manager
-dashboard, projects, employees, inventory, reports, documents, admin) work, but
-are on the old path. The worker screens — dashboard, tasks, task details,
-attendance, daily report, safety checklist, incident report, messages and
-chat — have already moved and are good examples. To move one across:
-
-1. Write a `…UiState` and `…ViewModel` that read from the repositories.
-2. Change the screen to take state and callbacks; add a `…Route`.
-3. Swap the models from `data.legacy` to `data.model`, and `.label` for
-   `stringResource(….labelRes)`.
-4. Move hard-coded text into `strings.xml`.
-5. Update its entry in `AppNavHost`.
-
-Until then, the app root keeps `MockRepository.currentRole` in step with the
-session and copies task statuses from the `TaskRepository` into the legacy task
-list, so legacy screens show the right user and the progress workers record.
-When no screen reads `MockRepository`, delete `data/legacy` and the
-`LegacyStateBridge` in `AppRoot.kt`.
-
 ## Fields beyond the ERD
 
 The front end needs a few fields the ERD does not have yet. They are in the
@@ -370,6 +369,9 @@ response.
 | Model | Field | Why |
 |---|---|---|
 | `User` | `jobTitle`, `employeeNumber` | Shown on profile and employee screens |
+| `User` | `isActive` | Suspended accounts (`false`) cannot sign in |
+| `Document` | `category` (drawing, permit, contract, safety, report, other) | Filtering documents by kind |
+| `SystemSettings` | whole type | Session timeout, sync interval, offline mode, daily checklist, low stock alerts |
 | `DailyReport` | `status` (`SUBMITTED` / `APPROVED`) | Backs `Manager.approveReport()` in the class diagram |
 | `Inventory` | `unitCost` | Rand values on material screens |
 | `Notification` | `type` | Picks the icon and the screen a notification opens |
@@ -390,12 +392,15 @@ response.
 ```
 
 - `data/fake/…Test` — seed data integrity, auth, sync queue, notifications,
-  attendance.
+  attendance, and the manager–worker loop (`FakeManagerWorkflowTest`).
 - `ui/screens/…ViewModelTest` — every screen ViewModel (sign-in, splash,
-  foundation and worker screens), run against the fakes.
+  foundation, worker, manager and administrator screens), run against the
+  fakes. `ManagerWorkflowTest` walks the whole loop through the ViewModels.
 - `navigation/NavMenusTest` — which items each role sees at each size.
 
 Tests use `testContainer()` (a `FakeAppContainer` with a fixed clock and no
 simulated delay) and `MainDispatcherRule`; `workerContainer()` and
 `keepCollecting()` in `ui/screens/WorkerTestSupport.kt` sign in the demo worker
-and keep `WhileSubscribed` state flowing.
+and keep `WhileSubscribed` state flowing; `managerContainer()` and `switchTo()`
+in `ManagerTestSupport.kt` do the same for the manager and for switching
+between accounts on shared data.

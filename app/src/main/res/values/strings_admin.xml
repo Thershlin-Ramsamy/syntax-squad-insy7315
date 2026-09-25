@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Administration dashboard -->
+    <string name="admin_greeting">Hello, %1$s</string>
+    <string name="admin_subtitle">Accounts, access and system health</string>
+    <string name="admin_metric_active">Active accounts</string>
+    <string name="admin_metric_suspended">Suspended</string>
+    <string name="admin_metric_audit">Audited actions</string>
+    <string name="admin_metric_waiting">Waiting to upload</string>
+    <string name="admin_section_roles">Accounts by role</string>
+    <string name="admin_section_suspended">Suspended accounts</string>
+    <string name="admin_section_activity">Recent activity</string>
+    <string name="admin_section_settings">Key settings</string>
+    <string name="admin_section_shortcuts">Administration</string>
+    <string name="admin_manage">Manage</string>
+    <string name="admin_change">Change</string>
+    <string name="admin_no_suspended_title">No suspended accounts</string>
+    <string name="admin_no_suspended_message">Everyone with an account can sign in.</string>
+    <string name="admin_users_hint">Roles, suspensions and restores</string>
+    <string name="admin_audit_hint">Every change made by an administrator or manager</string>
+    <string name="admin_settings_hint">Session timeout, sync and site rules</string>
+    <string name="admin_sync_hint">This device\'s upload queue</string>
+
+    <!-- User management -->
+    <string name="users_search">Search by name, email or employee no.</string>
+    <string name="users_filter_all">All accounts</string>
+    <string name="users_filter_active">Active</string>
+    <string name="users_filter_suspended">Suspended</string>
+    <string name="users_active">Active</string>
+    <string name="users_pick_title">Pick an account</string>
+    <string name="users_pick_message">Its role and access controls open here.</string>
+    <string name="users_empty_title">No accounts found</string>
+    <string name="users_empty_message">Nothing matches the search and filters.</string>
+    <string name="users_manage_title">Manage account</string>
+    <string name="users_role">Role</string>
+    <string name="users_access">Access</string>
+    <string name="users_suspend">Suspend account</string>
+    <string name="users_restore">Restore account</string>
+    <string name="users_suspend_title">Suspend %1$s?</string>
+    <string name="users_suspend_message">They will be signed out and unable to sign in until the account is restored. Their tasks, reports and history are kept.</string>
+    <string name="users_suspended_message">%1$s\'s account is suspended.</string>
+    <string name="users_restored_message">%1$s can sign in again.</string>
+    <string name="users_role_changed">%1$s\'s role is updated. The change is in the audit log.</string>
+    <string name="users_cannot_change_self">You can\'t change your own role or access. Ask another administrator.</string>
+    <string name="users_self_title">This is your account</string>
+    <string name="users_self_message">To stop anyone locking themselves out, another administrator has to change your role or access.</string>
+
+    <!-- Audit log -->
+    <string name="audit_search">Search actions</string>
+    <string name="audit_everyone">Everyone</string>
+    <string name="audit_yesterday">Yesterday</string>
+    <string name="audit_by_when">%1$s · %2$s</string>
+    <string name="audit_empty_title">No activity</string>
+    <string name="audit_empty_message">Nothing recorded matches these filters.</string>
+
+    <!-- System settings -->
+    <string name="system_section_security">Security</string>
+    <string name="system_section_sync">Offline and sync</string>
+    <string name="system_section_site">Site rules</string>
+    <string name="system_session_timeout">Session timeout</string>
+    <string name="system_session_timeout_hint">Sign people out after this long without using the app.</string>
+    <string name="system_sync_interval">Background upload</string>
+    <string name="system_sync_interval_hint">How often devices upload changes saved offline.</string>
+    <string name="system_offline_mode">Allow offline mode</string>
+    <string name="system_offline_mode_hint">Workers can keep working without signal and upload later.</string>
+    <string name="system_daily_checklist">Daily safety checklist</string>
+    <string name="system_daily_checklist_hint">Workers complete the checklist before starting tasks.</string>
+    <string name="system_low_stock">Low stock alerts</string>
+    <string name="system_low_stock_hint">Notify the project manager when a material drops below its minimum.</string>
+    <plurals name="system_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="system_on">On</string>
+    <string name="system_off">Off</string>
+    <string name="system_save">Save changes</string>
+    <string name="system_discard">Discard changes</string>
+    <string name="system_unsaved">You have unsaved changes.</string>
+    <string name="system_audit_note">Every change is recorded in the audit log.</string>
+    <string name="system_saved">Settings saved and recorded in the audit log.</string>
+    <string name="system_discarded">Changes discarded.</string>
+</resources>

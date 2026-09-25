@@ -17,11 +17,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -29,10 +27,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import com.mcc.construction.MccApplication
-import com.mcc.construction.data.legacy.MockRepository
-import com.mcc.construction.data.legacy.TaskStatus as LegacyTaskStatus
-import com.mcc.construction.data.model.TaskStatus as ModelTaskStatus
 import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.adaptive.LocalWindowLayout
 import com.mcc.construction.ui.adaptive.WindowWidthClass
@@ -91,7 +85,6 @@ fun AppRoot(
     val itemColors = navigationItemColors()
 
     SignedOutGuard(state.isSignedIn, currentRoute, navController, viewModel::hasActiveSession)
-    LegacyStateBridge(role)
 
     CompositionLocalProvider(
         LocalWindowLayout provides windowLayout,
@@ -246,23 +239,3 @@ private fun SignedOutGuard(
         }
     }
 }
-
-/**
- * Keeps the legacy MockRepository in step with the repositories, so screens not
- * yet migrated show the signed-in role and the task statuses workers record in
- * the new screens. Delete once no screen reads MockRepository.
- */
-@Composable
-private fun LegacyStateBridge(role: UserRole?) {
-    SideEffect {
-        if (role != null) MockRepository.currentRole.value = role
-    }
-    val tasks = (LocalContext.current.applicationContext as MccApplication).container.taskRepository
-    LaunchedEffect(tasks) {
-        tasks.observeTasks().collect { list ->
-            MockRepository.syncTaskStatuses(list.associate { it.taskId to it.status.toLegacy() })
-        }
-    }
-}
-
-private fun ModelTaskStatus.toLegacy(): LegacyTaskStatus = LegacyTaskStatus.valueOf(name)

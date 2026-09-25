@@ -5,105 +5,149 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.FactCheck
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.mcc.construction.data.legacy.AuditSeverity
-import com.mcc.construction.data.legacy.MockRepository
+import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.mcc.construction.R
+import com.mcc.construction.data.model.User
+import com.mcc.construction.data.model.UserRole
 import com.mcc.construction.ui.components.AppCard
+import com.mcc.construction.ui.components.Avatar
+import com.mcc.construction.ui.components.ChoiceChipGroup
 import com.mcc.construction.ui.components.EmptyState
-import com.mcc.construction.ui.components.Eyebrow
-import com.mcc.construction.ui.components.SegmentedFilter
-import com.mcc.construction.ui.components.StatusPill
-import com.mcc.construction.ui.label
+import com.mcc.construction.ui.components.LoadingState
+import com.mcc.construction.ui.components.ScreenScaffold
+import com.mcc.construction.ui.components.SearchField
+import com.mcc.construction.ui.components.SectionHeader
+import com.mcc.construction.ui.format.formatDate
+import com.mcc.construction.ui.format.relativeTime
+import com.mcc.construction.ui.preview.DevicePreviews
+import com.mcc.construction.ui.preview.PreviewSurface
 import com.mcc.construction.ui.theme.Spacing
-import com.mcc.construction.ui.tone
-
-private const val ALL = "All"
+import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Composable
-fun AuditLogScreen() {
-    var filter by rememberSaveable { mutableStateOf(ALL) }
-    val entries = MockRepository.auditLog
+fun AuditLogRoute(viewModel: AuditLogViewModel = viewModel(factory = AuditLogViewModel.Factory)) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    AuditLogScreen(state, viewModel::onQueryChange, viewModel::onActorFilterChange)
+}
 
-    val options = remember { listOf(ALL) + AuditSeverity.entries.map { it.label } }
-    val filtered = if (filter == ALL) entries else entries.filter { it.severity.label == filter }
-
-    Column(Modifier.fillMaxSize()) {
-        SegmentedFilter(
-            options = options,
-            selected = filter,
-            onSelect = { filter = it },
-            modifier = Modifier.padding(
-                horizontal = Spacing.screenH,
-                vertical = Spacing.md
-            )
+/** Every audited action, newest first and grouped by day, searchable and filterable by person. */
+@Composable
+fun AuditLogScreen(
+    state: AuditLogUiState,
+    onQueryChange: (String) -> Unit,
+    onActorFilterChange: (Int?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    if (state.entries == null) {
+        LoadingState(modifier)
+        return
+    }
+    ScreenScaffold(modifier = modifier, scrollable = false) {
+        SearchField(
+            query = state.query,
+            onQueryChange = onQueryChange,
+            label = stringResource(R.string.audit_search),
+            modifier = Modifier.fillMaxWidth()
         )
-
-        if (filtered.isEmpty()) {
-            EmptyState(
-                icon = Icons.AutoMirrored.Filled.FactCheck,
-                title = "No $filter events",
-                message = "Nothing at this severity has been recorded."
-            )
-            return@Column
-        }
-
+        Spacer(Modifier.height(Spacing.md))
+        val today = state.now.toLocalDate()
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = Spacing.screenH,
-                end = Spacing.screenH,
-                top = Spacing.xs,
-                bottom = Spacing.xxxl
-            ),
-            verticalArrangement = Arrangement.spacedBy(Spacing.itemGap)
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(bottom = Spacing.xxxl),
+            verticalArrangement = Arrangement.spacedBy(Spacing.sm)
         ) {
-            items(filtered, key = { it.id }) { entry ->
-                AppCard(modifier = Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Eyebrow(entry.timestamp)
-                            Spacer(Modifier.height(Spacing.xxs))
-                            Text(
-                                text = entry.action,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        StatusPill(entry.severity.label, entry.severity.tone)
+            item(key = "filters") {
+                ChoiceChipGroup(
+                    options = listOf<Int?>(null) + state.actors.map { it.userId },
+                    selected = state.actorFilter,
+                    onSelect = onActorFilterChange,
+                    label = { id ->
+                        if (id == null) stringResource(R.string.audit_everyone) else state.actors.first { it.userId == id }.fullName
                     }
-                    Spacer(Modifier.height(Spacing.sm))
-                    Text(
-                        text = entry.target,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Spacer(Modifier.height(Spacing.sm))
-                    Text(
-                        text = "${entry.actor} · ${entry.ipAddress}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            if (state.visible.isEmpty()) {
+                item(key = "empty") {
+                    EmptyState(
+                        icon = Icons.Filled.History,
+                        title = stringResource(R.string.audit_empty_title),
+                        message = stringResource(R.string.audit_empty_message)
                     )
                 }
             }
+            state.visible.groupBy { it.log.timestamp.toLocalDate() }.forEach { (day, entries) ->
+                item(key = "day-$day") {
+                    SectionHeader(
+                        title = dayLabel(day, today),
+                        modifier = Modifier.padding(top = Spacing.md)
+                    )
+                }
+                items(entries, key = { it.log.logId }) { entry ->
+                    AppCard(Modifier.fillMaxWidth()) { AuditEntryRow(entry, state.now) }
+                }
+            }
         }
+    }
+}
+
+@Composable
+private fun dayLabel(day: LocalDate, today: LocalDate): String = when (day) {
+    today -> stringResource(R.string.dashboard_today)
+    today.minusDays(1) -> stringResource(R.string.audit_yesterday)
+    else -> day.formatDate()
+}
+
+/** Who did what, and when. Shared with the administration dashboard. */
+@Composable
+internal fun AuditEntryRow(entry: AuditEntry, now: LocalDateTime) {
+    Row(verticalAlignment = Alignment.Top) {
+        Avatar(entry.actorName.ifEmpty { "?" })
+        Spacer(Modifier.width(Spacing.md))
+        Column(Modifier.weight(1f)) {
+            Text(entry.log.action, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(Spacing.xxs))
+            Text(
+                text = stringResource(R.string.audit_by_when, entry.actorName, relativeTime(entry.log.timestamp, now)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@DevicePreviews
+@Composable
+private fun AuditLogPreview() {
+    val now = LocalDateTime.now()
+    PreviewSurface {
+        AuditLogScreen(
+            AuditLogUiState(
+                entries = previewAudit(now),
+                actors = listOf(
+                    User(1, UserRole.ADMINISTRATOR, "Riaan", "van Wyk", "admin@mcc.co.za", "", "Systems Administrator", "MCC-0002"),
+                    User(2, UserRole.MANAGER, "Naledi", "Khumalo", "manager@mcc.co.za", "", "Site Manager", "MCC-1008")
+                ),
+                now = now
+            ),
+            onQueryChange = {},
+            onActorFilterChange = {}
+        )
     }
 }
