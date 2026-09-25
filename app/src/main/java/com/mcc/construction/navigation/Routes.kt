@@ -53,6 +53,9 @@ object Routes {
     const val MATERIAL_DETAIL_PATTERN = "material_detail/{materialId}"
     const val CHAT_PATTERN = "chat/{conversationId}"
 
+    /** Assign Task, opened from a project, with that project picked. */
+    const val ASSIGN_TASK_PATTERN = "assign_task/{projectId}"
+
     /** [INCIDENT_REPORT] with an optional link to the checklist that found the problem. */
     const val INCIDENT_REPORT_PATTERN = "incident_report?inspectionId={inspectionId}"
 
@@ -68,6 +71,7 @@ object Routes {
     fun employeeProfile(id: String) = "employee_profile/$id"
     fun materialDetail(id: String) = "material_detail/$id"
     fun chat(id: String) = "chat/$id"
+    fun assignTask(projectId: Int) = "assign_task/$projectId"
     fun incidentReport(inspectionId: Int) = "incident_report?inspectionId=$inspectionId"
 
     /** Routes that can be shown without a signed-in user. */

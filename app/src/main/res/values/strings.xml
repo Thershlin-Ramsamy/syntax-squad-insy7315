@@ -5,6 +5,17 @@
     <!-- Common actions and states -->
     <string name="action_back">Back</string>
     <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="action_ok">OK</string>
+    <string name="action_clear_search">Clear search</string>
+
+    <!-- Filters -->
+    <string name="filter_all">All</string>
+    <string name="filter_all_projects">All projects</string>
+    <string name="filter_with_count">%1$s (%2$d)</string>
+    <string name="names_and">%1$s and %2$s</string>
+
+    <!-- States -->
     <string name="loading">Loading…</string>
     <string name="placeholder_message">This screen is on its way. Its route and navigation already work, so it only needs its content built.</string>
 

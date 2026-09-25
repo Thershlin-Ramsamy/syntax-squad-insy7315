@@ -34,6 +34,15 @@ fun BigDecimal.formatRand(): String {
     return format.format(this)
 }
 
+/** "R 349 197" — rand without cents, for totals where cents are noise. */
+fun BigDecimal.formatRandWhole(): String {
+    val format = NumberFormat.getCurrencyInstance(SouthAfrica).apply {
+        currency = Currency.getInstance("ZAR")
+        maximumFractionDigits = 0
+    }
+    return format.format(this)
+}
+
 /** "24 Sep 2026". */
 fun LocalDate.formatDate(): String = format(dateFormat)
 

@@ -231,14 +231,17 @@ private fun TaskDetailContent(
         )
     }
 
-    Spacer(Modifier.height(Spacing.sectionGap))
-    SectionHeader(title = stringResource(R.string.task_detail_description))
-    Spacer(Modifier.height(Spacing.blockGap))
-    Text(
-        text = task.description,
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface
-    )
+    // Instructions are optional when a manager assigns a task.
+    if (task.description.isNotBlank()) {
+        Spacer(Modifier.height(Spacing.sectionGap))
+        SectionHeader(title = stringResource(R.string.task_detail_description))
+        Spacer(Modifier.height(Spacing.blockGap))
+        Text(
+            text = task.description,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
 
     Spacer(Modifier.height(Spacing.sectionGap))
     SectionHeader(title = stringResource(R.string.task_detail_proof))

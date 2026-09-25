@@ -15,14 +15,20 @@ import com.mcc.construction.ui.components.PlaceholderScreen
 import com.mcc.construction.ui.screens.admin.AdminDashboardScreen
 import com.mcc.construction.ui.screens.admin.AuditLogScreen
 import com.mcc.construction.ui.screens.admin.UserManagementScreen
-import com.mcc.construction.ui.screens.dashboard.ManagerDashboardScreen
 import com.mcc.construction.ui.screens.dashboard.WorkerDashboardRoute
 import com.mcc.construction.ui.screens.dashboard.WorkerDestination
-import com.mcc.construction.ui.screens.documents.DocumentsScreen
-import com.mcc.construction.ui.screens.employees.EmployeeListScreen
-import com.mcc.construction.ui.screens.employees.EmployeeProfileScreen
-import com.mcc.construction.ui.screens.inventory.InventoryScreen
-import com.mcc.construction.ui.screens.inventory.MaterialDetailScreen
+import com.mcc.construction.ui.screens.dashboard.ManagerDashboardRoute
+import com.mcc.construction.ui.screens.dashboard.ManagerDestination
+import com.mcc.construction.ui.screens.documents.DocumentsRoute
+import com.mcc.construction.ui.screens.employees.EmployeeListRoute
+import com.mcc.construction.ui.screens.employees.EmployeeProfileRoute
+import com.mcc.construction.ui.screens.inventory.InventoryRoute
+import com.mcc.construction.ui.screens.inventory.MaterialDetailRoute
+import com.mcc.construction.ui.screens.projects.AssignTaskRoute
+import com.mcc.construction.ui.screens.projects.ProjectDetailActions
+import com.mcc.construction.ui.screens.projects.ProjectDetailRoute
+import com.mcc.construction.ui.screens.projects.ProjectListRoute
+import com.mcc.construction.ui.screens.reports.ReportsRoute
 import com.mcc.construction.ui.screens.login.ForgotPasswordRoute
 import com.mcc.construction.ui.screens.login.LoginRoute
 import com.mcc.construction.ui.screens.messages.ChatRoute
@@ -30,9 +36,6 @@ import com.mcc.construction.ui.screens.messages.MessagesRoute
 import com.mcc.construction.ui.screens.notifications.NotificationsRoute
 import com.mcc.construction.ui.screens.profile.ProfileRoute
 import com.mcc.construction.ui.screens.profile.ProfileShortcut
-import com.mcc.construction.ui.screens.projects.ProjectDetailScreen
-import com.mcc.construction.ui.screens.projects.ProjectListScreen
-import com.mcc.construction.ui.screens.reports.ReportsScreen
 import com.mcc.construction.ui.screens.settings.SettingsRoute
 import com.mcc.construction.ui.screens.splash.SplashDestination
 import com.mcc.construction.ui.screens.splash.SplashRoute
@@ -110,7 +113,7 @@ fun AppNavHost(
         composable(Routes.SYNC_STATUS) {
             SyncStatusRoute(onBack = { navController.popBackStack() })
         }
-        composable(Routes.DOCUMENTS) { DocumentsScreen(navController) }
+        composable(Routes.DOCUMENTS) { DocumentsRoute() }
 
         // --- Worker --------------------------------------------------------
         composable(Routes.WORKER_DASHBOARD) {
@@ -157,11 +160,45 @@ fun AppNavHost(
         }
 
         // --- Manager -------------------------------------------------------
-        composable(Routes.MANAGER_DASHBOARD) { ManagerDashboardScreen(navController) }
-        composable(Routes.PROJECTS) { ProjectListScreen(navController) }
-        composable(Routes.EMPLOYEES) { EmployeeListScreen(navController) }
-        composable(Routes.INVENTORY) { InventoryScreen(navController) }
-        composable(Routes.REPORTS) { ReportsScreen(navController) }
+        composable(Routes.MANAGER_DASHBOARD) {
+            ManagerDashboardRoute(onNavigate = { destination -> navController.navigate(destination.route) })
+        }
+        composable(Routes.PROJECTS) {
+            ProjectListRoute(
+                onOpenProject = { id -> navController.navigate(Routes.projectDetail(id.toString())) },
+                detailPane = { id ->
+                    ProjectDetailRoute(projectId = id, actions = projectActions(navController), embedded = true)
+                }
+            )
+        }
+        composable(Routes.EMPLOYEES) {
+            EmployeeListRoute(
+                onOpenEmployee = { id -> navController.navigate(Routes.employeeProfile(id.toString())) },
+                detailPane = { id ->
+                    EmployeeProfileRoute(
+                        userId = id,
+                        onBack = {},
+                        onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) },
+                        onMessage = { userId -> navController.navigate(Routes.chat(userId.toString())) },
+                        embedded = true
+                    )
+                }
+            )
+        }
+        composable(Routes.INVENTORY) {
+            InventoryRoute(
+                onOpenMaterial = { id -> navController.navigate(Routes.materialDetail(id.toString())) },
+                detailPane = { id ->
+                    MaterialDetailRoute(
+                        materialId = id,
+                        onBack = {},
+                        onOpenProject = { projectId -> navController.navigate(Routes.projectDetail(projectId.toString())) },
+                        embedded = true
+                    )
+                }
+            )
+        }
+        composable(Routes.REPORTS) { ReportsRoute() }
 
         // --- Administrator -------------------------------------------------
         composable(Routes.ADMIN_DASHBOARD) { AdminDashboardScreen(navController) }
@@ -177,7 +214,7 @@ fun AppNavHost(
             arguments = listOf(navArgument(Routes.ARG_TASK_ID) { type = NavType.StringType })
         ) { entry ->
             TaskDetailRoute(
-                taskId = taskIdFrom(entry.arguments?.getString(Routes.ARG_TASK_ID)),
+                taskId = idFrom(entry.arguments?.getString(Routes.ARG_TASK_ID)),
                 onBack = { navController.popBackStack() }
             )
         }
@@ -186,9 +223,19 @@ fun AppNavHost(
             route = Routes.PROJECT_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_PROJECT_ID) { type = NavType.StringType })
         ) { entry ->
-            ProjectDetailScreen(
-                navController = navController,
-                projectId = entry.arguments?.getString(Routes.ARG_PROJECT_ID).orEmpty()
+            ProjectDetailRoute(
+                projectId = idFrom(entry.arguments?.getString(Routes.ARG_PROJECT_ID)),
+                actions = projectActions(navController, onBack = { navController.popBackStack() })
+            )
+        }
+
+        composable(
+            route = Routes.ASSIGN_TASK_PATTERN,
+            arguments = listOf(navArgument(Routes.ARG_PROJECT_ID) { type = NavType.StringType })
+        ) { entry ->
+            AssignTaskRoute(
+                projectId = idFrom(entry.arguments?.getString(Routes.ARG_PROJECT_ID)),
+                onBack = { navController.popBackStack() }
             )
         }
 
@@ -196,9 +243,11 @@ fun AppNavHost(
             route = Routes.EMPLOYEE_PROFILE_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_EMPLOYEE_ID) { type = NavType.StringType })
         ) { entry ->
-            EmployeeProfileScreen(
-                navController = navController,
-                employeeId = entry.arguments?.getString(Routes.ARG_EMPLOYEE_ID).orEmpty()
+            EmployeeProfileRoute(
+                userId = idFrom(entry.arguments?.getString(Routes.ARG_EMPLOYEE_ID)),
+                onBack = { navController.popBackStack() },
+                onOpenTask = { taskId -> navController.navigate(Routes.taskDetail(taskId.toString())) },
+                onMessage = { userId -> navController.navigate(Routes.chat(userId.toString())) }
             )
         }
 
@@ -206,9 +255,10 @@ fun AppNavHost(
             route = Routes.MATERIAL_DETAIL_PATTERN,
             arguments = listOf(navArgument(Routes.ARG_MATERIAL_ID) { type = NavType.StringType })
         ) { entry ->
-            MaterialDetailScreen(
-                navController = navController,
-                materialId = entry.arguments?.getString(Routes.ARG_MATERIAL_ID).orEmpty()
+            MaterialDetailRoute(
+                materialId = idFrom(entry.arguments?.getString(Routes.ARG_MATERIAL_ID)),
+                onBack = { navController.popBackStack() },
+                onOpenProject = { projectId -> navController.navigate(Routes.projectDetail(projectId.toString())) }
             )
         }
 
@@ -228,12 +278,37 @@ fun AppNavHost(
 /** Where opening a notification of [type] leads, for the signed-in [role]. */
 private fun notificationRoute(type: NotificationType, role: UserRole?): String = when (type) {
     NotificationType.TASK -> Routes.TASKS
-    NotificationType.SAFETY -> Routes.SAFETY_CHECKLIST
+    NotificationType.SAFETY -> if (role == UserRole.WORKER) Routes.SAFETY_CHECKLIST else Routes.REPORTS
     NotificationType.MESSAGE -> Routes.MESSAGES
     NotificationType.INVENTORY -> Routes.INVENTORY
     NotificationType.REPORT -> if (role == UserRole.WORKER) Routes.DAILY_REPORT else Routes.REPORTS
     NotificationType.SYSTEM -> Routes.SYNC_STATUS
 }
+
+/** Project Details' links, shared by the full screen and the projects list's side pane. */
+private fun projectActions(navController: NavHostController, onBack: () -> Unit = {}) = ProjectDetailActions(
+    onBack = onBack,
+    onAssignTask = { id -> navController.navigate(Routes.assignTask(id)) },
+    onOpenTask = { id -> navController.navigate(Routes.taskDetail(id.toString())) },
+    onOpenEmployee = { id -> navController.navigate(Routes.employeeProfile(id.toString())) },
+    onOpenMaterial = { id -> navController.navigate(Routes.materialDetail(id.toString())) },
+    onOpenDocuments = { navController.navigate(Routes.DOCUMENTS) },
+    onOpenReports = { navController.navigate(Routes.REPORTS) }
+)
+
+private val ManagerDestination.route: String
+    get() = when (this) {
+        ManagerDestination.Projects -> Routes.PROJECTS
+        is ManagerDestination.Project -> Routes.projectDetail(projectId.toString())
+        is ManagerDestination.AssignTask -> Routes.assignTask(projectId)
+        ManagerDestination.Tasks -> Routes.TASKS
+        ManagerDestination.Employees -> Routes.EMPLOYEES
+        ManagerDestination.Inventory -> Routes.INVENTORY
+        is ManagerDestination.Material -> Routes.materialDetail(materialId.toString())
+        ManagerDestination.Reports -> Routes.REPORTS
+        ManagerDestination.Documents -> Routes.DOCUMENTS
+        ManagerDestination.Notifications -> Routes.NOTIFICATIONS
+    }
 
 private val ProfileShortcut.route: String
     get() = when (this) {
@@ -261,10 +336,10 @@ private val WorkerDestination.route: String
     }
 
 /**
- * Task ids in routes are numbers. Older screens still pass the prototype's
- * "T-101" form; its digits are the same id, so both work.
+ * Ids in routes are numbers. The prototype's "T-101" or "P-01" forms still
+ * work: their digits are the same id.
  */
-private fun taskIdFrom(argument: String?): Int =
+private fun idFrom(argument: String?): Int =
     argument.orEmpty().filter(Char::isDigit).toIntOrNull() ?: -1
 
 /** The inspection argument's value when an incident is reported on its own. */

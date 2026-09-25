@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Attendance status, shared by every screen that shows who is on site -->
+    <string name="presence_on_site">On site</string>
+    <string name="presence_finished">Clocked out</string>
+    <string name="presence_not_in">Not in</string>
+    <string name="presence_on_site_since">On site since %1$s</string>
+    <string name="presence_finished_hours">Clocked out · %1$s h worked</string>
+    <string name="presence_not_in_detail">Not clocked in today</string>
+
+    <!-- Manager dashboard -->
+    <string name="manager_assign_task">Assign a task</string>
+    <string name="manager_metric_active_projects">Active projects</string>
+    <string name="manager_metric_open_tasks">Open tasks</string>
+    <string name="manager_metric_on_site">Workers on site</string>
+    <string name="manager_metric_alerts">Need attention</string>
+    <string name="manager_metric_x_of_y">%1$d of %2$d</string>
+    <plurals name="manager_overdue">
+        <item quantity="one">%d overdue</item>
+        <item quantity="other">%d overdue</item>
+    </plurals>
+    <plurals name="manager_reports_to_approve">
+        <item quantity="one">%d report to approve</item>
+        <item quantity="other">%d reports to approve</item>
+    </plurals>
+    <string name="manager_section_projects">Projects</string>
+    <string name="manager_section_tasks">Tasks by status</string>
+    <string name="manager_section_attendance">Today\'s attendance</string>
+    <string name="manager_section_alerts">Needs attention</string>
+    <string name="manager_section_updates">Latest updates</string>
+    <string name="manager_not_in_names">Not in yet: %1$s</string>
+    <string name="manager_no_projects_title">No live projects</string>
+    <string name="manager_no_projects_message">Active and on-hold projects appear here with their progress.</string>
+    <string name="manager_no_alerts_title">All clear</string>
+    <string name="manager_no_alerts_message">No incidents, failed checklists or low stock in the last week.</string>
+    <string name="manager_no_updates_title">No updates yet</string>
+    <string name="manager_no_updates_message">When workers start or finish tasks and file reports, it shows up here.</string>
+    <plurals name="manager_more_alerts">
+        <item quantity="one">And %d more</item>
+        <item quantity="other">And %d more</item>
+    </plurals>
+    <string name="manager_alert_incident">%1$s incident reported</string>
+    <string name="manager_alert_failed_inspection">Safety checklist failed</string>
+    <string name="manager_alert_by">Checked by %1$s</string>
+    <string name="manager_alert_stock">%1$s · %2$d %3$s left, minimum %4$d</string>
+    <string name="manager_action_review_reports">Review reports</string>
+    <string name="manager_action_check_stock">Check stock</string>
+    <string name="manager_action_upload">Upload a document</string>
+
+    <!-- Projects -->
+    <string name="projects_pick_title">Pick a project</string>
+    <string name="projects_pick_message">Its budget, team, tasks and materials open here.</string>
+    <string name="projects_empty_title">No projects here</string>
+    <string name="projects_empty_message">No project has this status. Try another filter.</string>
+    <string name="project_due">Due %1$s</string>
+    <string name="project_progress_percent">%1$d%%</string>
+    <plurals name="project_open_tasks">
+        <item quantity="one">%d open task</item>
+        <item quantity="other">%d open tasks</item>
+    </plurals>
+    <string name="project_detail_title">Project</string>
+    <string name="project_not_found_title">Project not found</string>
+    <string name="project_not_found_message">It may have been removed. Go back to the projects list.</string>
+    <string name="project_complete">complete</string>
+    <string name="project_budget">Budget</string>
+    <string name="project_start">Start date</string>
+    <string name="project_end">End date</string>
+    <string name="project_time_left">Time left</string>
+    <string name="project_manager">Project manager</string>
+    <string name="project_finished">Finished</string>
+    <string name="project_starts_on">Starts %1$s</string>
+    <plurals name="project_days_left">
+        <item quantity="one">%d day left</item>
+        <item quantity="other">%d days left</item>
+    </plurals>
+    <plurals name="project_days_over">
+        <item quantity="one">%d day past the end date</item>
+        <item quantity="other">%d days past the end date</item>
+    </plurals>
+    <plurals name="project_section_tasks">
+        <item quantity="one">Tasks · %1$d open of %2$d</item>
+        <item quantity="other">Tasks · %1$d open of %2$d</item>
+    </plurals>
+    <string name="project_section_team">Team · %1$d of %2$d on site</string>
+    <string name="project_section_materials">Materials</string>
+    <string name="project_section_documents">Documents</string>
+    <string name="project_section_reports">Recent daily reports</string>
+    <string name="project_task_unassigned">Not assigned yet</string>
+    <plurals name="project_member_tasks">
+        <item quantity="one">%d open task</item>
+        <item quantity="other">%d open tasks</item>
+    </plurals>
+    <string name="project_no_tasks_title">No tasks yet</string>
+    <string name="project_no_tasks_message">Use Assign a task to give the crew their first job.</string>
+    <string name="project_no_team_title">No one assigned</string>
+    <string name="project_no_team_message">People join the team when a task on this project is assigned to them.</string>
+    <string name="project_no_materials_title">No materials tracked</string>
+    <string name="project_no_materials_message">Stock held for this project will be listed here.</string>
+    <string name="project_no_documents_title">No documents</string>
+    <string name="project_no_documents_message">Drawings, permits and contracts for this project will be listed here.</string>
+    <string name="project_no_reports_title">No daily reports</string>
+    <string name="project_no_reports_message">Reports the crew submit for this project will be listed here.</string>
+
+    <!-- Assign task -->
+    <string name="assign_title">Assign a task</string>
+    <string name="assign_section_project">Project</string>
+    <string name="assign_section_task">Task</string>
+    <string name="assign_section_deadline">Deadline</string>
+    <string name="assign_section_priority">Priority</string>
+    <plurals name="assign_section_workers">
+        <item quantity="one">Assign to · %d chosen</item>
+        <item quantity="other">Assign to · %d chosen</item>
+    </plurals>
+    <string name="assign_field_title">Task title</string>
+    <string name="assign_field_title_hint">e.g. Strip formwork on Block C</string>
+    <string name="assign_field_description">Instructions (optional)</string>
+    <string name="assign_field_description_hint">What needs doing, where, and anything to watch out for</string>
+    <string name="assign_title_required">Give the task a title.</string>
+    <string name="assign_deadline_today">Today</string>
+    <string name="assign_deadline_tomorrow">Tomorrow</string>
+    <string name="assign_deadline_three_days">In 3 days</string>
+    <string name="assign_deadline_next_week">Next week</string>
+    <string name="assign_deadline_pick">Pick a date</string>
+    <string name="assign_deadline_chosen">Due %1$s</string>
+    <string name="assign_deadline_none">Choose when this must be finished.</string>
+    <string name="assign_deadline_required">Choose a deadline.</string>
+    <string name="assign_deadline_past">The deadline can\'t be in the past.</string>
+    <string name="assign_workers_hint">Each person gets a notification and sees the task straight away.</string>
+    <string name="assign_workers_required">Choose at least one person.</string>
+    <string name="assign_missing_fields">Fill in the highlighted fields to assign this task.</string>
+    <string name="assign_save">Assign task</string>
+    <plurals name="assign_save_to">
+        <item quantity="one">Assign to %d person</item>
+        <item quantity="other">Assign to %d people</item>
+    </plurals>
+    <string name="assign_saved_title">Task assigned</string>
+    <string name="assign_saved_message">“%1$s” is on %2$s\'s task list, and they have been notified.</string>
+    <string name="assign_saved_details">%1$s · due %2$s</string>
+    <string name="assign_done">Done</string>
+    <string name="assign_another">Assign another task</string>
+
+    <!-- Employees -->
+    <string name="employees_search">Search by name, trade or employee no.</string>
+    <string name="employees_pick_title">Pick someone</string>
+    <string name="employees_pick_message">Their contact details, tasks and hours open here.</string>
+    <string name="employees_empty_title">No one found</string>
+    <string name="employees_empty_message">No one matches “%1$s”. Check the spelling or clear the search.</string>
+    <string name="employee_suspended">Suspended</string>
+    <string name="employee_suspended_detail">Account suspended</string>
+    <string name="employee_profile_title">Employee</string>
+    <string name="employee_not_found_title">Employee not found</string>
+    <string name="employee_not_found_message">They may have left the company. Go back to the employee list.</string>
+    <string name="employee_today">Today</string>
+    <string name="employee_send_message">Message %1$s</string>
+    <string name="employee_current_tasks">Current tasks · %1$d</string>
+    <string name="employee_no_tasks_title">Nothing open</string>
+    <plurals name="employee_no_tasks_message">
+        <item quantity="one">%d task completed so far. Assign a task from a project to give them more work.</item>
+        <item quantity="other">%d tasks completed so far. Assign a task from a project to give them more work.</item>
+    </plurals>
+    <string name="employee_attendance">Attendance</string>
+    <string name="employee_hours_week">Hours this week</string>
+    <string name="employee_hours_fortnight">Hours, last 14 days</string>
+    <string name="employee_days_worked">Days worked</string>
+    <string name="employee_shift_times">%1$s – %2$s</string>
+    <string name="employee_shift_open">still on site</string>
+    <string name="employee_no_shifts_title">No shifts recorded</string>
+    <string name="employee_no_shifts_message">Clock-ins from the last two weeks will appear here.</string>
+
+    <!-- Inventory -->
+    <string name="inventory_pick_title">Pick a material</string>
+    <string name="inventory_pick_message">Stock level, supplier and adjustments open here.</string>
+    <string name="inventory_metric_items">Materials</string>
+    <string name="inventory_metric_low">Low or out</string>
+    <string name="inventory_metric_value">Stock value</string>
+    <string name="inventory_low_only">Show low stock only</string>
+    <string name="inventory_empty_title">No materials</string>
+    <string name="inventory_empty_message">No stock is recorded for this project yet.</string>
+    <string name="inventory_no_low_title">Stock is healthy</string>
+    <string name="inventory_no_low_message">Every material is above its minimum level.</string>
+    <string name="inventory_quantity">%1$d %2$s</string>
+    <string name="inventory_quantity_of_minimum">%1$s · %2$d %3$s, minimum %4$d</string>
+    <string name="inventory_row_meta">%1$s · %2$s</string>
+
+    <!-- Material details -->
+    <string name="material_title">Material</string>
+    <string name="material_not_found_title">Material not found</string>
+    <string name="material_not_found_message">It may have been removed from inventory.</string>
+    <string name="material_low_title">Below minimum</string>
+    <string name="material_out_title">Out of stock</string>
+    <string name="material_low_message">Keep at least %1$d %2$s on site. Order more from the supplier below.</string>
+    <string name="material_on_hand">%1$s on hand</string>
+    <string name="material_minimum">Minimum level</string>
+    <string name="material_unit_cost">Unit cost</string>
+    <string name="material_stock_value">Stock value</string>
+    <string name="material_adjust">Adjust stock</string>
+    <string name="material_amount">Amount (%1$s)</string>
+    <string name="material_record_use">Use stock</string>
+    <string name="material_record_use_amount">Use %1$d</string>
+    <string name="material_record_delivery">Receive stock</string>
+    <string name="material_record_delivery_amount">Receive %1$d</string>
+    <string name="material_amount_required">Enter how many to add or take away.</string>
+    <string name="material_not_enough">Only %1$d %2$s are on hand.</string>
+    <string name="material_use_recorded">Used %1$d %2$s. On hand now: %3$d.</string>
+    <string name="material_use_recorded_low">Used %1$d %2$s. On hand now: %3$d, below the minimum. The project manager has been alerted.</string>
+    <string name="material_delivery_recorded">Received %1$d %2$s. %3$d on hand.</string>
+    <string name="material_supplier">Supplier</string>
+    <string name="material_supplier_unknown">No supplier on record.</string>
+    <string name="material_supplier_company">Company</string>
+    <string name="material_supplier_contact">Contact</string>
+    <string name="material_project">Project</string>
+
+    <!-- Reports history -->
+    <string name="reports_pick_title">Pick a report</string>
+    <string name="reports_pick_message">The full report opens here.</string>
+    <string name="reports_type_daily">Daily reports</string>
+    <string name="reports_type_inspection">Inspections</string>
+    <string name="reports_type_incident">Incidents</string>
+    <string name="reports_awaiting_only">Awaiting approval only</string>
+    <plurals name="reports_awaiting_count">
+        <item quantity="one">%d daily report waiting</item>
+        <item quantity="other">%d daily reports waiting</item>
+    </plurals>
+    <string name="reports_empty_title">No reports</string>
+    <string name="reports_empty_message">Nothing matches these filters.</string>
+    <string name="reports_none_awaiting_title">All approved</string>
+    <string name="reports_none_awaiting_message">Every daily report here has been approved.</string>
+    <string name="reports_row_subtitle">%1$s · %2$s</string>
+    <string name="reports_daily_title">Daily report, %1$s</string>
+    <string name="reports_inspection_passed">Safety checklist passed</string>
+    <string name="reports_inspection_failed">Safety checklist failed</string>
+    <string name="reports_passed">Passed</string>
+    <string name="reports_failed">Failed</string>
+    <string name="reports_expand">Show details</string>
+    <string name="reports_collapse">Hide details</string>
+    <string name="reports_weather">Weather</string>
+    <string name="reports_work_completed">Work completed</string>
+    <string name="reports_problems">Problems encountered</string>
+    <string name="reports_no_problems">None reported</string>
+    <string name="reports_comments">Comments</string>
+    <string name="reports_no_comments">No comments</string>
+    <string name="reports_linked_incidents">Incidents logged</string>
+    <string name="reports_severity">Severity</string>
+    <string name="reports_severity_value">Level %1$d · %2$s</string>
+    <string name="reports_description">What happened</string>
+    <string name="reports_approve">Approve report</string>
+    <string name="reports_approved_message">Report approved. %1$s has been notified.</string>
+
+    <!-- Documents -->
+    <string name="document_category_drawing">Drawing</string>
+    <string name="document_category_permit">Permit</string>
+    <string name="document_category_contract">Contract</string>
+    <string name="document_category_safety">Safety</string>
+    <string name="document_category_report">Report</string>
+    <string name="document_category_other">Other</string>
+    <string name="document_version">Version %1$d</string>
+    <string name="document_version_date">%1$s · v%2$d · %3$s</string>
+    <string name="documents_upload">Upload document</string>
+    <string name="documents_upload_title">Upload a document</string>
+    <string name="documents_upload_confirm">Upload</string>
+    <string name="documents_file_name">File name</string>
+    <string name="documents_file_name_hint">e.g. Block-C-Floor-Plan-RevA.pdf</string>
+    <string name="documents_file_name_required">Enter the file name.</string>
+    <string name="documents_uploading">Uploading… %1$d%%</string>
+    <string name="documents_uploaded">%1$s uploaded as version %2$d.</string>
+    <string name="documents_project">Project</string>
+    <string name="documents_category">Type</string>
+    <string name="documents_latest_version">Latest</string>
+    <string name="documents_history">Version history</string>
+    <string name="documents_new_version">Upload new version</string>
+    <string name="documents_empty_title">No documents</string>
+    <string name="documents_empty_message">Nothing has been filed here yet.</string>
+</resources>
