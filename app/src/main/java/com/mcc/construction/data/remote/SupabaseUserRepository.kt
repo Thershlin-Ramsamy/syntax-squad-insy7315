@@ -15,21 +15,33 @@ class SupabaseUserRepository(
     private val reads: BackendReadStore,
     private val writes: BackendRepositorySupport
 ) : UserRepository {
+
     override fun observeUsers(): Flow<List<User>> {
-        return reads.observeRows<UserRow>("users", "user_id")
-            .map { rows ->
-                rows.map { it.toModel() }
-                    .sortedWith(
-                        compareBy<User> { it.lastName.lowercase() }
-                            .thenBy { it.firstName.lowercase() }
-                            .thenBy { it.userId }
-                    )
-            }
+        return reads.observeRows<UserRow>(
+            table = "users",
+            primaryKey = "user_id"
+        ).map { rows ->
+            rows.map { row ->
+                mapUser(row)
+            }.sortedWith(
+                compareBy<User> {
+                    it.lastName.lowercase()
+                }.thenBy {
+                    it.firstName.lowercase()
+                }.thenBy {
+                    it.userId
+                }
+            )
+        }
     }
 
-    override fun observeUser(userId: Int): Flow<User?> {
+    override fun observeUser(
+        userId: Int
+    ): Flow<User?> {
         return observeUsers().map { users ->
-            users.firstOrNull { it.userId == userId }
+            users.firstOrNull {
+                it.userId == userId
+            }
         }
     }
 
@@ -37,27 +49,40 @@ class SupabaseUserRepository(
         role: UserRole
     ): Flow<List<User>> {
         return observeUsers().map { users ->
-            users.filter { it.role == role }
+            users.filter {
+                it.role == role
+            }
         }
     }
 
     override fun observeRoles(): Flow<List<Role>> {
-        return reads.observeRows<RoleRow>("roles", "role_id")
-            .map { rows ->
-                rows.map { it.toModel() }
-                    .sortedBy { it.roleId }
+        return reads.observeRows<RoleRow>(
+            table = "roles",
+            primaryKey = "role_id"
+        ).map { rows ->
+            rows.map { row ->
+                Role(
+                    roleId = row.roleId,
+                    roleName = row.roleName,
+                    description = row.description
+                )
+            }.sortedBy {
+                it.roleId
             }
+        }
     }
 
     override suspend fun assignRole(
         userId: Int,
         role: UserRole
     ) {
-        require(userId > 0)
+        require(userId > 0) {
+            "A positive application user ID is required."
+        }
 
         writes.execute(
-            BackendAction.USER_ROLE,
-            buildJsonObject {
+            action = BackendAction.USER_ROLE,
+            payload = buildJsonObject {
                 put("user_id", userId)
                 put("role_id", role.roleId)
             }
@@ -68,14 +93,38 @@ class SupabaseUserRepository(
         userId: Int,
         active: Boolean
     ) {
-        require(userId > 0)
+        require(userId > 0) {
+            "A positive application user ID is required."
+        }
 
         writes.execute(
-            BackendAction.USER_ACTIVE,
-            buildJsonObject {
+            action = BackendAction.USER_ACTIVE,
+            payload = buildJsonObject {
                 put("user_id", userId)
                 put("active", active)
             }
+        )
+    }
+
+    private fun mapUser(
+        row: UserRow
+    ): User {
+        val role = requireNotNull(
+            UserRole.fromRoleId(row.roleId)
+        ) {
+            "Unsupported role ID: ${row.roleId}"
+        }
+
+        return User(
+            userId = row.userId,
+            role = role,
+            firstName = row.firstName,
+            lastName = row.lastName,
+            email = row.email,
+            phone = row.phone,
+            jobTitle = row.jobTitle,
+            employeeNumber = row.employeeNumber,
+            isActive = row.isActive
         )
     }
 }
