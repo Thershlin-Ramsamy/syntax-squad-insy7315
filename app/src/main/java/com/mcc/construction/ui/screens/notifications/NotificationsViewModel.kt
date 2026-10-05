@@ -8,29 +8,27 @@ import com.mcc.construction.data.model.Notification
 import com.mcc.construction.data.repository.AuthRepository
 import com.mcc.construction.data.repository.NotificationRepository
 import com.mcc.construction.ui.common.appContainer
+import com.mcc.construction.ui.common.runBackendMutation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-enum class NotificationFilter { ALL, UNREAD }
+enum class NotificationFilter {
+    ALL, UNREAD
+}
 
 data class NotificationsUiState(
-    /** Null until the first load finishes, so the screen can tell loading from empty. */
     val notifications: List<Notification>? = null,
     val filter: NotificationFilter = NotificationFilter.ALL
 ) {
-    val unreadCount: Int get() = notifications?.count { !it.isRead } ?: 0
+    val unreadCount: Int
+        get() = notifications?.count { !it.isRead } ?: 0
 
     val visible: List<Notification>
         get() = when (filter) {
             NotificationFilter.ALL -> notifications.orEmpty()
-            NotificationFilter.UNREAD -> notifications.orEmpty().filter { !it.isRead }
+            NotificationFilter.UNREAD ->
+                notifications.orEmpty().filter { !it.isRead }
         }
 }
 
@@ -42,14 +40,23 @@ class NotificationsViewModel(
     private val filter = MutableStateFlow(NotificationFilter.ALL)
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val notifications = authRepository.session.flatMapLatest { session ->
-        if (session == null) flowOf(emptyList())
-        else notificationRepository.observeNotifications(session.user.userId)
-    }
+    private val notifications =
+        authRepository.session.flatMapLatest { session ->
+            if (session == null) {
+                flowOf(emptyList())
+            } else {
+                notificationRepository.observeNotifications(
+                    session.user.userId
+                )
+            }
+        }
 
     val uiState: StateFlow<NotificationsUiState> =
         combine(notifications, filter) { list, selected ->
-            NotificationsUiState(notifications = list, filter = selected)
+            NotificationsUiState(
+                notifications = list,
+                filter = selected
+            )
         }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
@@ -60,18 +67,28 @@ class NotificationsViewModel(
         filter.value = selected
     }
 
-    /** Opening a notification counts as reading it. */
     fun onNotificationOpened(notification: Notification) {
-        if (!notification.isRead) onMarkAsRead(notification.notificationId)
+        if (!notification.isRead) {
+            onMarkAsRead(notification.notificationId)
+        }
     }
 
     fun onMarkAsRead(notificationId: Int) {
-        viewModelScope.launch { notificationRepository.markAsRead(notificationId) }
+        viewModelScope.launch {
+            runBackendMutation {
+                notificationRepository.markAsRead(notificationId)
+            }
+        }
     }
 
     fun onMarkAllAsRead() {
         val userId = authRepository.session.value?.user?.userId ?: return
-        viewModelScope.launch { notificationRepository.markAllAsRead(userId) }
+
+        viewModelScope.launch {
+            runBackendMutation {
+                notificationRepository.markAllAsRead(userId)
+            }
+        }
     }
 
     companion object {
@@ -80,7 +97,10 @@ class NotificationsViewModel(
         val Factory = viewModelFactory {
             initializer {
                 val container = appContainer()
-                NotificationsViewModel(container.authRepository, container.notificationRepository)
+                NotificationsViewModel(
+                    container.authRepository,
+                    container.notificationRepository
+                )
             }
         }
     }
