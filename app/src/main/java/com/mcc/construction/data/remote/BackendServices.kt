@@ -22,8 +22,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-class BackendServices(context: Context) {
-    private val applicationContext = context.applicationContext
+class BackendServices(
+    context: Context
+) {
+
+    private val applicationContext =
+        context.applicationContext
 
     val clock: Clock = Clock.system(
         ZoneId.of("Africa/Johannesburg")
@@ -39,15 +43,12 @@ class BackendServices(context: Context) {
     )
 
     val client: SupabaseClient = provider.client
-    val refreshBus = BackendRefreshBus()
 
-    @Volatile
-    var canWrite: () -> Boolean = { true }
+    val refreshBus = BackendRefreshBus()
 
     val gateway = BackendGateway(
         client = client,
-        refreshBus = refreshBus,
-        canWrite = { canWrite() }
+        refreshBus = refreshBus
     )
 
     val writes = BackendRepositorySupport(
@@ -76,23 +77,27 @@ class BackendServices(context: Context) {
         clock
     )
 
-    val authRepository: AuthRepository = authentication
+    val authRepository: AuthRepository =
+        authentication
 
-    val userRepository: UserRepository = SupabaseUserRepository(
-        reads,
-        writes
-    )
+    val userRepository: UserRepository =
+        SupabaseUserRepository(
+            reads,
+            writes
+        )
 
-    val projectRepository: ProjectRepository = SupabaseProjectRepository(
-        reads
-    )
+    val projectRepository: ProjectRepository =
+        SupabaseProjectRepository(
+            reads
+        )
 
-    val taskRepository: TaskRepository = SupabaseTaskRepository(
-        client,
-        reads,
-        writes,
-        storage
-    )
+    val taskRepository: TaskRepository =
+        SupabaseTaskRepository(
+            client,
+            reads,
+            writes,
+            storage
+        )
 
     val attendanceRepository: AttendanceRepository =
         SupabaseAttendanceRepository(
@@ -122,13 +127,16 @@ class BackendServices(context: Context) {
     )
 
     val documentRepository: FileDocumentRepository =
-        SupabaseDocumentRepository(documentService)
+        SupabaseDocumentRepository(
+            documentService
+        )
 
-    val safetyRepository: SafetyRepository = SupabaseSafetyRepository(
-        reads,
-        writes,
-        storage
-    )
+    val safetyRepository: SafetyRepository =
+        SupabaseSafetyRepository(
+            reads,
+            writes,
+            storage
+        )
 
     val notificationRepository: NotificationRepository =
         SupabaseNotificationRepository(
@@ -136,30 +144,39 @@ class BackendServices(context: Context) {
             writes
         )
 
-    val messageRepository: MessageRepository = SupabaseMessageRepository(
-        reads,
-        writes,
-        userRepository
-    )
+    val messageRepository: MessageRepository =
+        SupabaseMessageRepository(
+            reads,
+            writes,
+            userRepository
+        )
 
-    val auditLogRepository: AuditLogRepository = SupabaseAuditLogRepository(
-        reads
-    )
+    val auditLogRepository: AuditLogRepository =
+        SupabaseAuditLogRepository(
+            reads
+        )
 
-    val settingsRepository: SettingsRepository = LocalSettingsRepository(
-        applicationContext
-    )
+    val settingsRepository: SettingsRepository =
+        LocalSettingsRepository(
+            applicationContext
+        )
 
-    val organisationSettings = SupabaseSystemSettingsRepository(
-        client,
-        writes,
-        refreshBus,
-        scope
-    )
+    val organisationSettings =
+        SupabaseSystemSettingsRepository(
+            client,
+            writes,
+            refreshBus,
+            scope
+        )
 
     val systemSettingsRepository: SystemSettingsRepository =
         organisationSettings
 
+    /*
+     * Retained for its lifetime: constructing this bridge starts
+     * the subscription handling implemented in BackendRealtimeBridge.
+     */
+    @Suppress("unused")
     val realtime = BackendRealtimeBridge(
         client,
         authRepository,
