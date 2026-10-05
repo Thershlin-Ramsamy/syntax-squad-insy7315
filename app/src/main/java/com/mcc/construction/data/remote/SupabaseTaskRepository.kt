@@ -32,9 +32,7 @@ class SupabaseTaskRepository(
             table = "tasks",
             primaryKey = "task_id"
         ).map { rows ->
-            rows.map { row ->
-                mapTask(row)
-            }.sortedWith(
+            rows.map { mapTask(it) }.sortedWith(
                 compareBy<Task> {
                     it.deadline
                 }.thenBy {
@@ -44,13 +42,9 @@ class SupabaseTaskRepository(
         }
     }
 
-    override fun observeTask(
-        taskId: Int
-    ): Flow<Task?> {
+    override fun observeTask(taskId: Int): Flow<Task?> {
         return observeTasks().map { tasks ->
-            tasks.firstOrNull {
-                it.taskId == taskId
-            }
+            tasks.firstOrNull { it.taskId == taskId }
         }
     }
 
@@ -58,9 +52,7 @@ class SupabaseTaskRepository(
         projectId: Int
     ): Flow<List<Task>> {
         return observeTasks().map { tasks ->
-            tasks.filter {
-                it.projectId == projectId
-            }
+            tasks.filter { it.projectId == projectId }
         }
     }
 
@@ -77,9 +69,7 @@ class SupabaseTaskRepository(
                 it.taskId
             }.toSet()
 
-            tasks.filter {
-                it.taskId in taskIds
-            }
+            tasks.filter { it.taskId in taskIds }
         }
     }
 
@@ -87,29 +77,22 @@ class SupabaseTaskRepository(
         taskId: Int
     ): Flow<List<TaskAssignment>> {
         return observeAllAssignments().map { assignments ->
-            assignments.filter {
-                it.taskId == taskId
-            }
+            assignments.filter { it.taskId == taskId }
         }
     }
 
-    override fun observeAllAssignments():
-            Flow<List<TaskAssignment>> {
+    override fun observeAllAssignments(): Flow<List<TaskAssignment>> {
         return reads.observeRows<TaskAssignmentRow>(
             table = "task_assignments",
             primaryKey = "assignment_id"
         ).map { rows ->
-            rows.map { row ->
-                mapAssignment(row)
-            }.sortedBy {
+            rows.map { mapAssignment(it) }.sortedBy {
                 it.assignmentId
             }
         }
     }
 
-    override suspend fun createTask(
-        draft: TaskDraft
-    ): Task {
+    override suspend fun createTask(draft: TaskDraft): Task {
         error(
             "Supabase task creation requires worker IDs. " +
                     "Use createAssignedTask."
@@ -128,7 +111,6 @@ class SupabaseTaskRepository(
         require(uniqueWorkerIds.size in 1..100) {
             "Choose between 1 and 100 workers."
         }
-
         require(uniqueWorkerIds.all { it > 0 })
 
         val row = writes.executeAs<TaskRow>(
@@ -142,9 +124,7 @@ class SupabaseTaskRepository(
                 put(
                     "worker_ids",
                     JsonArray(
-                        uniqueWorkerIds.map {
-                            JsonPrimitive(it)
-                        }
+                        uniqueWorkerIds.map { JsonPrimitive(it) }
                     )
                 )
             }
@@ -200,16 +180,19 @@ class SupabaseTaskRepository(
     override fun observeProofPhotos(
         taskId: Int
     ): Flow<List<TaskPhoto>> {
-        return reads.observeRows<TaskPhotoRow>(
-            table = "task_photos",
-            primaryKey = "photo_id"
-        ).map { rows ->
+        return reads.mapRows(
+            "task_photos",
+            reads.observeRows<TaskPhotoRow>(
+                table = "task_photos",
+                primaryKey = "photo_id"
+            )
+        ) { rows ->
             rows.filter {
                 it.taskId == taskId && !it.isRemoved
             }.sortedBy {
                 it.photoId
-            }.map { row ->
-                mapPhoto(row)
+            }.map {
+                mapPhoto(it)
             }
         }
     }
@@ -248,9 +231,7 @@ class SupabaseTaskRepository(
         return mapPhoto(row)
     }
 
-    override suspend fun removeProofPhoto(
-        photoId: Int
-    ) {
+    override suspend fun removeProofPhoto(photoId: Int) {
         require(photoId > 0)
 
         val actorId = writes.currentApplicationUserId()
@@ -263,7 +244,6 @@ class SupabaseTaskRepository(
 
         writes.requireCurrentUser(actorId)
 
-        // First revoke the photo's logical attachment.
         writes.execute(
             action = BackendAction.TASK_PHOTO_REMOVE,
             payload = buildJsonObject {
@@ -272,14 +252,10 @@ class SupabaseTaskRepository(
         )
 
         writes.requireCurrentUser(actorId)
-
-        // Storage's delete policy permits the removed object.
         storage.deleteRemovedPhoto(photo.storagePath)
     }
 
-    private fun mapTask(
-        row: TaskRow
-    ): Task {
+    private fun mapTask(row: TaskRow): Task {
         return Task(
             taskId = row.taskId,
             projectId = row.projectId,
@@ -302,9 +278,7 @@ class SupabaseTaskRepository(
         )
     }
 
-    private suspend fun mapPhoto(
-        row: TaskPhotoRow
-    ): TaskPhoto {
+    private suspend fun mapPhoto(row: TaskPhotoRow): TaskPhoto {
         return TaskPhoto(
             photoId = row.photoId,
             taskId = row.taskId,

@@ -20,18 +20,21 @@ class SupabaseDailyReportRepository(
 ) : DailyReportRepository {
 
     override fun observeReports(): Flow<List<DailyReport>> {
-        return reads.observeRows<DailyReportRow>(
-            table = "daily_reports",
-            primaryKey = "report_id"
-        ).map { rows ->
+        return reads.mapRows(
+            "daily_reports",
+            reads.observeRows<DailyReportRow>(
+                table = "daily_reports",
+                primaryKey = "report_id"
+            )
+        ) { rows ->
             rows.sortedWith(
                 compareByDescending<DailyReportRow> {
                     it.date
                 }.thenByDescending {
                     it.reportId
                 }
-            ).map { row ->
-                mapReport(row)
+            ).map {
+                mapReport(it)
             }
         }
     }
@@ -40,9 +43,7 @@ class SupabaseDailyReportRepository(
         userId: Int
     ): Flow<List<DailyReport>> {
         return observeReports().map { reports ->
-            reports.filter {
-                it.userId == userId
-            }
+            reports.filter { it.userId == userId }
         }
     }
 
@@ -50,9 +51,7 @@ class SupabaseDailyReportRepository(
         reportId: Int
     ): Flow<DailyReport?> {
         return observeReports().map { reports ->
-            reports.firstOrNull {
-                it.reportId == reportId
-            }
+            reports.firstOrNull { it.reportId == reportId }
         }
     }
 
@@ -60,8 +59,8 @@ class SupabaseDailyReportRepository(
         draft: DailyReportDraft
     ): DailyReport {
         writes.requireCurrentUser(draft.userId)
-
         require(draft.projectId > 0)
+
         require(draft.workCompleted.isNotBlank()) {
             "Describe the work completed."
         }
@@ -97,7 +96,9 @@ class SupabaseDailyReportRepository(
                 )
                 put(
                     "photo_paths",
-                    JsonArray(paths.map { JsonPrimitive(it) })
+                    JsonArray(
+                        paths.map { JsonPrimitive(it) }
+                    )
                 )
             }
         )
@@ -105,9 +106,7 @@ class SupabaseDailyReportRepository(
         return mapReport(row)
     }
 
-    override suspend fun approveReport(
-        reportId: Int
-    ) {
+    override suspend fun approveReport(reportId: Int) {
         require(reportId > 0)
 
         writes.execute(
@@ -118,9 +117,7 @@ class SupabaseDailyReportRepository(
         )
     }
 
-    private suspend fun mapReport(
-        row: DailyReportRow
-    ): DailyReport {
+    private suspend fun mapReport(row: DailyReportRow): DailyReport {
         return DailyReport(
             reportId = row.reportId,
             projectId = row.projectId,
