@@ -29,8 +29,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mcc.construction.R
+import com.mcc.construction.data.model.Document
 import com.mcc.construction.data.model.DocumentCategory
 import com.mcc.construction.data.model.Project
+import com.mcc.construction.data.model.ProjectStatus
+import com.mcc.construction.ui.preview.DevicePreviews
+import com.mcc.construction.ui.preview.PreviewSurface
+import java.math.BigDecimal
+import java.time.LocalDate
+import java.time.LocalDateTime
 import com.mcc.construction.ui.adaptive.LocalWindowLayout
 import com.mcc.construction.ui.components.*
 import com.mcc.construction.ui.format.formatDate
@@ -687,4 +694,47 @@ private fun UploadDialog(
             }
         }
     )
+}
+
+private fun previewDocumentsState(): DocumentsUiState {
+    val today = LocalDate.now()
+    val now = LocalDateTime.now()
+    val projects = listOf(
+        Project(1, 2, "Riverside Estate Phase 2", "Centurion, Gauteng", BigDecimal("48200000"), today.minusDays(255), today.plusDays(68), ProjectStatus.ACTIVE, 68.0),
+        Project(2, 2, "Harbour View Offices", "Foreshore, Cape Town", BigDecimal("48200000"), today.minusDays(100), today.plusDays(200), ProjectStatus.ACTIVE, 41.5)
+    )
+    val documents = listOf(
+        DocumentItem(
+            document = Document(1, 1, "Riverside-Structural-Drawings-RevC.pdf", 3, now.minusDays(13), DocumentCategory.DRAWING),
+            projectName = "Riverside Estate Phase 2"
+        ),
+        DocumentItem(
+            document = Document(2, 1, "Building-Permit-Approved.pdf", 1, now.minusDays(30), DocumentCategory.PERMIT),
+            projectName = "Riverside Estate Phase 2"
+        ),
+        DocumentItem(
+            document = Document(3, 2, "Harbour-View-Contract.pdf", 2, now.minusDays(45), DocumentCategory.CONTRACT),
+            projectName = "Harbour View Offices"
+        ),
+        DocumentItem(
+            document = Document(4, 2, "Safety-Plan-v2.pdf", 2, now.minusDays(5), DocumentCategory.SAFETY),
+            projectName = "Harbour View Offices"
+        )
+    )
+    return DocumentsUiState(
+        documents = documents,
+        projects = projects,
+        canUpload = true
+    )
+}
+
+@DevicePreviews
+@Composable
+private fun DocumentsScreenPreview() {
+    PreviewSurface {
+        DocumentsScreen(
+            state = previewDocumentsState(),
+            actions = DocumentsActions()
+        )
+    }
 }
