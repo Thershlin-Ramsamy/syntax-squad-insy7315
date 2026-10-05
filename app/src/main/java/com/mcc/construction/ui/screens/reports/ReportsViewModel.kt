@@ -9,12 +9,11 @@ import com.mcc.construction.data.model.*
 import com.mcc.construction.data.repository.*
 import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import java.time.Clock
 import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 enum class ReportType {
     DAILY, INSPECTION, INCIDENT
@@ -36,8 +35,7 @@ sealed interface ReportEntry {
         override val key get() = "daily-${report.reportId}"
         override val type get() = ReportType.DAILY
         override val projectId get() = report.projectId
-        override val time: LocalDateTime
-            get() = report.date.atTime(END_OF_SHIFT)
+        override val time get() = report.date.atTime(LocalTime.of(17, 0))
     }
 
     data class Inspection(
@@ -49,8 +47,7 @@ sealed interface ReportEntry {
         override val key get() = "inspection-${inspection.inspectionId}"
         override val type get() = ReportType.INSPECTION
         override val projectId get() = inspection.projectId
-        override val time: LocalDateTime
-            get() = inspection.date.atTime(START_OF_SHIFT)
+        override val time get() = inspection.date.atTime(LocalTime.of(7, 0))
     }
 
     data class Incident(
@@ -61,13 +58,7 @@ sealed interface ReportEntry {
     ) : ReportEntry {
         override val key get() = "incident-${incident.incidentId}"
         override val type get() = ReportType.INCIDENT
-        override val time: LocalDateTime
-            get() = incident.dateReported
-    }
-
-    private companion object {
-        val END_OF_SHIFT: LocalTime = LocalTime.of(17, 0)
-        val START_OF_SHIFT: LocalTime = LocalTime.of(7, 0)
+        override val time get() = incident.dateReported
     }
 }
 
@@ -90,12 +81,12 @@ data class ReportsUiState(
         }
 
     val visible: List<ReportEntry>
-        get() = inProject.filter { entry ->
-            (typeFilter == null || entry.type == typeFilter) &&
+        get() = inProject.filter {
+            (typeFilter == null || it.type == typeFilter) &&
                     (
                             !awaitingOnly ||
-                                    entry is ReportEntry.Daily &&
-                                    entry.report.status == ReportStatus.SUBMITTED
+                                    it is ReportEntry.Daily &&
+                                    it.report.status == ReportStatus.SUBMITTED
                             )
         }
 
@@ -139,46 +130,41 @@ class ReportsViewModel(
         val projectNames = projects.associate {
             it.projectId to it.projectName
         }
-        val names = users.associate {
-            it.userId to it.fullName
-        }
-        val inspectionsById = inspections.associateBy {
-            it.inspectionId
-        }
-        val incidentCounts = incidents.groupingBy {
-            it.inspectionId
-        }.eachCount()
+        val names = users.associate { it.userId to it.fullName }
+        val inspectionsById = inspections.associateBy { it.inspectionId }
+        val incidentCounts = incidents.groupingBy { it.inspectionId }
+            .eachCount()
 
-        val all = reports.map {
-            ReportEntry.Daily(
-                it,
-                projectNames[it.projectId].orEmpty(),
-                names[it.userId].orEmpty()
-            )
-        } + inspections.map {
-            ReportEntry.Inspection(
-                it,
-                projectNames[it.projectId].orEmpty(),
-                names[it.inspectorId].orEmpty(),
-                incidentCounts[it.inspectionId] ?: 0
-            )
-        } + incidents.map { incident ->
-            val inspection = inspectionsById[incident.inspectionId]
+        val all: List<ReportEntry> =
+            reports.map {
+                ReportEntry.Daily(
+                    it,
+                    projectNames[it.projectId].orEmpty(),
+                    names[it.userId].orEmpty()
+                )
+            } + inspections.map {
+                ReportEntry.Inspection(
+                    it,
+                    projectNames[it.projectId].orEmpty(),
+                    names[it.inspectorId].orEmpty(),
+                    incidentCounts[it.inspectionId] ?: 0
+                )
+            } + incidents.map { incident ->
+                val inspection = inspectionsById[incident.inspectionId]
+                ReportEntry.Incident(
+                    incident,
+                    inspection?.projectId ?: -1,
+                    inspection?.let {
+                        projectNames[it.projectId]
+                    }.orEmpty(),
+                    inspection?.let {
+                        names[it.inspectorId]
+                    }.orEmpty()
+                )
+            }
 
-            ReportEntry.Incident(
-                incident = incident,
-                projectId = inspection?.projectId ?: -1,
-                projectName = inspection?.let {
-                    projectNames[it.projectId]
-                }.orEmpty(),
-                authorName = inspection?.let {
-                    names[it.inspectorId]
-                }.orEmpty()
-            )
-        }
-
-        all.sortedByDescending { it.time } to projects.filter { p ->
-            all.any { it.projectId == p.projectId }
+        all.sortedByDescending { it.time } to projects.filter { project ->
+            all.any { it.projectId == project.projectId }
         }
     }
 
@@ -187,20 +173,19 @@ class ReportsViewModel(
         filters,
         transient,
         authRepository.session
-    ) { (list, projects), f, t, session ->
+    ) { (list, projects), filter, extra, session ->
         ReportsUiState(
             entries = list,
             projects = projects,
-            projectFilter = f.projectId,
-            typeFilter = f.type,
-            awaitingOnly = f.awaitingOnly,
-            canApprove = session != null &&
-                    session.role != UserRole.WORKER,
-            selectedKey = f.selected,
-            expanded = f.expanded,
-            approving = t.approving,
+            projectFilter = filter.projectId,
+            typeFilter = filter.type,
+            awaitingOnly = filter.awaitingOnly,
+            canApprove = session != null && session.role != UserRole.WORKER,
+            selectedKey = filter.selected,
+            expanded = filter.expanded,
+            approving = extra.approving,
             now = LocalDateTime.now(clock),
-            message = t.message
+            message = extra.message
         )
     }.stateIn(
         viewModelScope,
@@ -208,21 +193,17 @@ class ReportsViewModel(
         ReportsUiState()
     )
 
-    fun onProjectFilterChange(projectId: Int?) = filters.update {
-        it.copy(projectId = projectId)
-    }
+    fun onProjectFilterChange(projectId: Int?) =
+        filters.update { it.copy(projectId = projectId) }
 
-    fun onTypeFilterChange(type: ReportType?) = filters.update {
-        it.copy(type = type)
-    }
+    fun onTypeFilterChange(type: ReportType?) =
+        filters.update { it.copy(type = type) }
 
-    fun onAwaitingOnlyChange(value: Boolean) = filters.update {
-        it.copy(awaitingOnly = value)
-    }
+    fun onAwaitingOnlyChange(value: Boolean) =
+        filters.update { it.copy(awaitingOnly = value) }
 
-    fun onSelect(key: String) = filters.update {
-        it.copy(selected = key)
-    }
+    fun onSelect(key: String) =
+        filters.update { it.copy(selected = key) }
 
     fun onToggleExpanded(key: String) = filters.update {
         it.copy(
@@ -235,49 +216,47 @@ class ReportsViewModel(
     }
 
     fun onApprove(reportId: Int) {
-        if (
-            !uiState.value.canApprove ||
-            reportId in transient.value.approving
-        ) return
+        val state = uiState.value
+        if (!state.canApprove) return
 
-        val entry = uiState.value.entries.orEmpty()
+        val entry = state.entries.orEmpty()
             .filterIsInstance<ReportEntry.Daily>()
             .firstOrNull {
-                it.report.reportId == reportId
+                it.report.reportId == reportId &&
+                        it.report.status == ReportStatus.SUBMITTED
             } ?: return
 
-        transient.update {
-            it.copy(approving = it.approving + reportId)
-        }
-
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    transient.update {
-                        it.copy(approving = it.approving - reportId)
-                    }
-                }
-            ) {
-                dailyReportRepository.approveReport(reportId)
-
+        launchSubmission(
+            isBusy = { reportId in transient.value.approving },
+            setBusy = { busy ->
                 transient.update {
                     it.copy(
-                        approving = it.approving - reportId,
-                        message = UiMessage(
-                            R.string.reports_approved_message,
-                            listOf(
-                                entry.authorName.substringBefore(' ')
-                            )
-                        )
+                        approving = if (busy) {
+                            it.approving + reportId
+                        } else {
+                            it.approving - reportId
+                        }
                     )
                 }
+            },
+            failureMessage =
+                "Report approval could not be confirmed. Check your connection " +
+                        "and the report status before trying again."
+        ) {
+            dailyReportRepository.approveReport(reportId)
+            transient.update {
+                it.copy(
+                    message = UiMessage(
+                        R.string.reports_approved_message,
+                        listOf(entry.authorName.substringBefore(' '))
+                    )
+                )
             }
         }
     }
 
-    fun onMessageShown() = transient.update {
-        it.copy(message = null)
-    }
+    fun onMessageShown() =
+        transient.update { it.copy(message = null) }
 
     private data class Filters(
         val projectId: Int? = null,

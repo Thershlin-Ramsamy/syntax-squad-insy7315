@@ -1,88 +1,57 @@
 package com.mcc.construction.di
 
 import android.content.Context
-import com.mcc.construction.data.remote.BackendNetworkMonitor
-import com.mcc.construction.data.remote.BackendServices
-import com.mcc.construction.data.remote.BackendSessionPolicy
-import com.mcc.construction.data.remote.EncryptedOutboxStorage
-import com.mcc.construction.data.remote.MessageOutbox
-import com.mcc.construction.data.remote.OfflineMessageRepository
-import com.mcc.construction.data.remote.SupabaseConfig
-import com.mcc.construction.data.remote.SupabaseSyncRepository
+import com.mcc.construction.data.remote.*
 import com.mcc.construction.data.repository.MessageRepository
 import com.mcc.construction.data.repository.SyncRepository
-import kotlinx.coroutines.flow.combine
 
-class SupabaseAppContainer(context: Context) : AppContainer {
+class SupabaseAppContainer(
+    context: Context
+) : AppContainer {
+
     private val applicationContext = context.applicationContext
     private val services = BackendServices(applicationContext)
     private val network = BackendNetworkMonitor(applicationContext)
 
     private val outbox = MessageOutbox(
         storage = EncryptedOutboxStorage(
-            context = applicationContext,
-            projectUrl = SupabaseConfig.fromBuildConfig().url
+            applicationContext,
+            SupabaseConfig.fromBuildConfig().url
         ),
         scope = services.scope,
         clock = services.clock
     )
 
+    private val remoteSync = SupabaseSyncRepository(
+        context = applicationContext,
+        client = services.client,
+        auth = services.authRepository,
+        network = network,
+        outbox = outbox,
+        gateway = services.gateway,
+        reads = services.reads,
+        scope = services.scope,
+        clock = services.clock,
+        organisation = services.systemSettingsRepository
+    )
+
     override val syncRepository: SyncRepository =
-        SupabaseSyncRepository(
-            context = applicationContext,
-            client = services.client,
-            auth = services.authRepository,
-            network = network,
-            outbox = outbox,
-            gateway = services.gateway,
-            reads = services.reads,
-            scope = services.scope,
-            clock = services.clock,
-            organisationSettings = services.systemSettingsRepository
+        PolicySyncRepository(
+            remoteSync,
+            services.systemSettingsRepository,
+            services.scope
         )
 
     override val messageRepository: MessageRepository =
         OfflineMessageRepository(
-            client = services.client,
-            auth = services.authRepository,
-            delegate = services.messageRepository,
-            users = services.userRepository,
-            outbox = outbox,
-            gateway = services.gateway,
-            sync = syncRepository
+            services.client,
+            services.authRepository,
+            services.messageRepository,
+            services.userRepository,
+            outbox,
+            services.gateway,
+            syncRepository
         )
-
-    init {
-        services.canWrite = {
-            network.available.value &&
-                    !syncRepository.status.value.isOfflineMode
-        }
-    }
-
-    val backendReadFailed = combine(
-        services.reads.failedTables,
-        services.authentication.profileReadFailed,
-        services.organisationSettings.readFailed
-    ) { tables, profile, settings ->
-        tables.isNotEmpty() || profile || settings
-    }
-
-    private val sessionPolicy = BackendSessionPolicy(
-        applicationContext,
-        services.authRepository,
-        services.systemSettingsRepository,
-        services.clock,
-        services.scope
-    )
-
-    init {
-        services.authentication.onExplicitSignIn =
-            sessionPolicy::beginSession
-    }
-
-    override fun recordUserInteraction() {
-        sessionPolicy.recordInteraction()
-    }
 
     override val authRepository = services.authRepository
     override val userRepository = services.userRepository
@@ -98,6 +67,11 @@ class SupabaseAppContainer(context: Context) : AppContainer {
     override val settingsRepository = services.settingsRepository
     override val systemSettingsRepository = services.systemSettingsRepository
     override val clock = services.clock
-
     override val demoAccounts: List<DemoAccount> = emptyList()
+
+    init {
+        services.gateway.setWriteGuard {
+            WritePolicy.requireOnline(syncRepository.status.value)
+        }
+    }
 }

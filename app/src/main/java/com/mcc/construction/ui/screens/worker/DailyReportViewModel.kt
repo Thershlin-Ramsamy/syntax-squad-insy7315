@@ -7,12 +7,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mcc.construction.data.model.*
 import com.mcc.construction.data.repository.*
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import java.time.Clock
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 enum class ReportField {
     PROJECT, WEATHER, WORK_COMPLETED
@@ -39,9 +38,7 @@ data class DailyReportUiState(
     val alreadySubmittedToday: DailyReport? = null
 ) {
     val selectedProject: Project?
-        get() = projects.firstOrNull {
-            it.projectId == form.projectId
-        }
+        get() = projects.firstOrNull { it.projectId == form.projectId }
 }
 
 class DailyReportViewModel(
@@ -76,16 +73,12 @@ class DailyReportViewModel(
 
             val (tasks, allProjects, reports) = data
             val mine = tasks.map { it.projectId }.toSet()
-            val projects = allProjects.filter {
-                it.projectId in mine
-            }.ifEmpty {
-                allProjects.filter {
-                    it.status == ProjectStatus.ACTIVE
+            val projects = allProjects.filter { it.projectId in mine }
+                .ifEmpty {
+                    allProjects.filter { it.status == ProjectStatus.ACTIVE }
                 }
-            }
-            val projectId =
-                current.projectId ?: projects.firstOrNull()?.projectId
-            val today = LocalDate.now(clock)
+            val projectId = current.projectId
+                ?: projects.firstOrNull()?.projectId
 
             DailyReportUiState(
                 isLoading = false,
@@ -96,7 +89,8 @@ class DailyReportViewModel(
                             it.status == TaskStatus.COMPLETED
                 }.map { it.title },
                 alreadySubmittedToday = reports.firstOrNull {
-                    it.projectId == projectId && it.date == today
+                    it.projectId == projectId &&
+                            it.date == LocalDate.now(clock)
                 }?.takeIf { current.submitted == null }
             )
         }.stateIn(
@@ -132,42 +126,30 @@ class DailyReportViewModel(
 
     fun onAddFinishedTasks() {
         val titles = uiState.value.finishedTaskTitles
-
         edit { current ->
-            val missingTitles = titles.filterNot {
+            val missing = titles.filterNot {
                 current.workCompleted.contains(it)
             }
-
-            if (missingTitles.isEmpty()) return@edit current
-
             current.copy(
                 workCompleted = appendLines(
                     current.workCompleted,
-                    missingTitles
+                    missing
                 ),
                 missing = current.missing - ReportField.WORK_COMPLETED
             )
         }
     }
 
-    fun onAddProblem(phrase: String) = edit { current ->
-        if (current.problems.contains(phrase)) {
-            current
-        } else {
-            current.copy(
-                problems = appendLines(
-                    current.problems,
-                    listOf(phrase)
-                )
-            )
-        }
+    fun onAddProblem(phrase: String) = edit {
+        if (it.problems.contains(phrase)) it
+        else it.copy(
+            problems = appendLines(it.problems, listOf(phrase))
+        )
     }
 
-    fun onPhotosPicked(uris: List<String>) = edit { current ->
-        current.copy(
-            photoUris = (current.photoUris + uris)
-                .distinct()
-                .take(MAX_PHOTOS)
+    fun onPhotosPicked(uris: List<String>) = edit {
+        it.copy(
+            photoUris = (it.photoUris + uris).distinct().take(MAX_PHOTOS)
         )
     }
 
@@ -177,14 +159,7 @@ class DailyReportViewModel(
 
     fun onSubmitClick() {
         val current = uiState.value.form
-
-        val missing = buildSet {
-            if (current.projectId == null) add(ReportField.PROJECT)
-            if (current.weather == null) add(ReportField.WEATHER)
-            if (current.workCompleted.isBlank()) {
-                add(ReportField.WORK_COMPLETED)
-            }
-        }
+        val missing = missingFields(current)
 
         edit {
             it.copy(
@@ -202,82 +177,96 @@ class DailyReportViewModel(
         val userId = authRepository.session.value?.user?.userId ?: return
         val current = uiState.value.form
 
-        if (
-            current.isSubmitting ||
-            current.submitted != null ||
-            current.workCompleted.isBlank()
-        ) return
+        if (form.value.isSubmitting || form.value.submitted != null) return
+
+        val missing = missingFields(current)
+        if (missing.isNotEmpty()) {
+            edit {
+                it.copy(
+                    missing = missing,
+                    isConfirmVisible = false
+                )
+            }
+            return
+        }
 
         val projectId = current.projectId ?: return
         val weather = current.weather ?: return
 
-        edit {
+        form.update {
             it.copy(
-                isConfirmVisible = false,
-                isSubmitting = true
+                projectId = projectId,
+                isConfirmVisible = false
             )
         }
 
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    form.update { it.copy(isSubmitting = false) }
-                }
-            ) {
-                val report = reportRepository.submitReport(
-                    DailyReportDraft(
-                        projectId = projectId,
-                        userId = userId,
-                        weather = weather.storedValue,
-                        workCompleted = current.workCompleted.trim(),
-                        problemsEncountered = current.problems.trim(),
-                        photoUris = current.photoUris
-                    )
+        launchSubmission(
+            isBusy = { form.value.isSubmitting },
+            setBusy = { busy ->
+                form.update { it.copy(isSubmitting = busy) }
+            },
+            failureMessage =
+                "The daily report could not be confirmed. Your text and " +
+                        "photo selections have been kept. Check your connection " +
+                        "and report history before trying again."
+        ) {
+            val report = reportRepository.submitReport(
+                DailyReportDraft(
+                    projectId = projectId,
+                    userId = userId,
+                    weather = weather.storedValue,
+                    workCompleted = current.workCompleted.trim(),
+                    problemsEncountered = current.problems.trim(),
+                    photoUris = current.photoUris
                 )
+            )
 
-                val offline = !syncRepository.status.value.isOnline
-
+            if (authRepository.session.value?.user?.userId == userId) {
                 form.update {
                     it.copy(
-                        isSubmitting = false,
                         submitted = report,
-                        submittedOffline = offline
+                        submittedOffline = false
                     )
                 }
             }
         }
     }
 
-    fun onStartAnother() = edit {
-        DailyReportForm(projectId = it.projectId)
+    fun onStartAnother() {
+        if (form.value.isSubmitting) return
+
+        form.value = DailyReportForm(
+            projectId = form.value.projectId
+                ?: uiState.value.form.projectId
+        )
     }
 
-    private fun edit(
-        change: (DailyReportForm) -> DailyReportForm
-    ) {
+    private fun missingFields(
+        current: DailyReportForm
+    ): Set<ReportField> = buildSet {
+        if (current.projectId == null) add(ReportField.PROJECT)
+        if (current.weather == null) add(ReportField.WEATHER)
+        if (current.workCompleted.isBlank()) add(ReportField.WORK_COMPLETED)
+    }
+
+    private fun edit(change: (DailyReportForm) -> DailyReportForm) {
         form.update {
-            if (it.isSubmitting) {
-                it
-            } else {
-                change(
-                    it.copy(
-                        projectId =
-                            it.projectId ?: uiState.value.form.projectId
-                    )
+            if (it.isSubmitting || it.submitted != null) it
+            else change(
+                it.copy(
+                    projectId = it.projectId
+                        ?: uiState.value.form.projectId
                 )
-            }
+            )
         }
     }
 
     private fun appendLines(
         existing: String,
         lines: List<String>
-    ): String {
-        return (
-                listOf(existing.trimEnd()).filter { it.isNotEmpty() } +
-                        lines
-                ).joinToString("\n")
-    }
+    ): String =
+        (listOf(existing.trimEnd()).filter { it.isNotEmpty() } + lines)
+            .joinToString("\n")
 
     companion object {
         private const val STOP_TIMEOUT_MS = 5_000L

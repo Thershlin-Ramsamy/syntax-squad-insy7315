@@ -9,11 +9,10 @@ import com.mcc.construction.data.model.*
 import com.mcc.construction.data.repository.*
 import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import java.time.Clock
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 private const val STOP_TIMEOUT_MS = 5_000L
 
@@ -42,8 +41,7 @@ data class AdminDashboardUiState(
     val settings: SystemSettings = SystemSettings(),
     val now: LocalDateTime = LocalDateTime.MIN
 ) {
-    val activeUsers: Int
-        get() = activeByRole.values.sum()
+    val activeUsers: Int get() = activeByRole.values.sum()
 }
 
 class AdminDashboardViewModel(
@@ -58,8 +56,8 @@ class AdminDashboardViewModel(
     private val people = combine(
         userRepository.observeUsers(),
         auditLogRepository.observeAuditLog()
-    ) { u, a ->
-        u to a
+    ) { users, audit ->
+        users to audit
     }
 
     val uiState: StateFlow<AdminDashboardUiState> = combine(
@@ -72,12 +70,10 @@ class AdminDashboardViewModel(
             isLoading = false,
             firstName = session?.user?.firstName.orEmpty(),
             activeByRole = UserRole.entries.associateWith { role ->
-                users.count {
-                    it.role == role && it.isActive
-                }
+                users.count { it.role == role && it.isActive }
             },
             suspended = users.filter { !it.isActive },
-            recentActivity = audit.take(RECENT_ACTIVITY).withNames(users),
+            recentActivity = audit.take(5).withNames(users),
             totalAuditEntries = audit.size,
             sync = sync,
             settings = settings,
@@ -90,8 +86,6 @@ class AdminDashboardViewModel(
     )
 
     companion object {
-        private const val RECENT_ACTIVITY = 5
-
         val Factory = viewModelFactory {
             initializer {
                 val c = appContainer()
@@ -126,14 +120,15 @@ data class UserManagementUiState(
     val visible: List<User>
         get() {
             val q = query.trim()
-
             return users.orEmpty().filter { user ->
                 (roleFilter == null || user.role == roleFilter) &&
-                        when (accountFilter) {
-                            AccountFilter.ALL -> true
-                            AccountFilter.ACTIVE -> user.isActive
-                            AccountFilter.SUSPENDED -> !user.isActive
-                        } &&
+                        (
+                                when (accountFilter) {
+                                    AccountFilter.ALL -> true
+                                    AccountFilter.ACTIVE -> user.isActive
+                                    AccountFilter.SUSPENDED -> !user.isActive
+                                }
+                                ) &&
                         (
                                 q.isEmpty() ||
                                         user.fullName.contains(q, true) ||
@@ -144,18 +139,14 @@ data class UserManagementUiState(
         }
 
     fun countFor(role: UserRole?): Int =
-        users.orEmpty().count {
-            role == null || it.role == role
-        }
+        users.orEmpty().count { role == null || it.role == role }
 
     val selectedUser: User?
-        get() = users?.firstOrNull {
-            it.userId == selectedUserId
-        }
+        get() = users?.firstOrNull { it.userId == selectedUserId }
 
     val paneUser: User?
-        get() = selectedUser?.takeIf { user ->
-            visible.any { it.userId == user.userId }
+        get() = selectedUser?.takeIf { selected ->
+            visible.any { it.userId == selected.userId }
         } ?: visible.firstOrNull()
 
     fun isSelf(user: User): Boolean =
@@ -173,8 +164,8 @@ class UserManagementViewModel(
         userRepository.observeUsers(),
         authRepository.session,
         local
-    ) { users, session, l ->
-        l.copy(
+    ) { users, session, current ->
+        current.copy(
             users = users.sortedWith(
                 compareBy({ it.role.ordinal }, { it.fullName })
             ),
@@ -186,44 +177,33 @@ class UserManagementViewModel(
         UserManagementUiState()
     )
 
-    fun onQueryChange(value: String) = local.update {
-        it.copy(query = value)
+    fun onQueryChange(value: String) =
+        local.update { it.copy(query = value) }
+
+    fun onRoleFilterChange(role: UserRole?) =
+        local.update { it.copy(roleFilter = role) }
+
+    fun onAccountFilterChange(filter: AccountFilter) =
+        local.update { it.copy(accountFilter = filter) }
+
+    fun onSelectUser(userId: Int) {
+        if (!local.value.isSaving) {
+            local.update { it.copy(selectedUserId = userId) }
+        }
     }
 
-    fun onRoleFilterChange(role: UserRole?) = local.update {
-        it.copy(roleFilter = role)
-    }
-
-    fun onAccountFilterChange(filter: AccountFilter) = local.update {
-        it.copy(accountFilter = filter)
-    }
-
-    fun onSelectUser(userId: Int) = local.update {
-        it.copy(selectedUserId = userId)
-    }
-
-    fun onCloseUser() = local.update {
-        it.copy(selectedUserId = null)
+    fun onCloseUser() {
+        if (!local.value.isSaving) {
+            local.update { it.copy(selectedUserId = null) }
+        }
     }
 
     fun onChangeRole(userId: Int, role: UserRole) {
-        val user = uiState.value.users?.firstOrNull {
-            it.userId == userId
-        } ?: return
+        val user = uiState.value.users
+            ?.firstOrNull { it.userId == userId } ?: return
 
         if (user.role == role || local.value.isSaving) return
-
-        if (uiState.value.isSelf(user)) {
-            local.update {
-                it.copy(
-                    message = UiMessage(
-                        R.string.users_cannot_change_self,
-                        isError = true
-                    )
-                )
-            }
-            return
-        }
+        if (rejectSelf(user)) return
 
         save(
             UiMessage(
@@ -236,36 +216,25 @@ class UserManagementViewModel(
     }
 
     fun onRequestSuspend(userId: Int) {
-        val user = uiState.value.users?.firstOrNull {
-            it.userId == userId
-        } ?: return
+        if (local.value.isSaving) return
 
-        if (uiState.value.isSelf(user)) {
-            local.update {
-                it.copy(
-                    message = UiMessage(
-                        R.string.users_cannot_change_self,
-                        isError = true
-                    )
-                )
-            }
-            return
-        }
+        val user = uiState.value.users
+            ?.firstOrNull { it.userId == userId } ?: return
+
+        if (rejectSelf(user)) return
 
         local.update { it.copy(confirmSuspendId = userId) }
     }
 
-    fun onDismissSuspend() = local.update {
-        it.copy(confirmSuspendId = null)
-    }
+    fun onDismissSuspend() =
+        local.update { it.copy(confirmSuspendId = null) }
 
     fun onConfirmSuspend() {
         val id = local.value.confirmSuspendId ?: return
-        val user = uiState.value.users?.firstOrNull {
-            it.userId == id
-        } ?: return
+        val user = uiState.value.users
+            ?.firstOrNull { it.userId == id } ?: return
 
-        local.update { it.copy(confirmSuspendId = null) }
+        if (rejectSelf(user)) return
 
         save(
             UiMessage(
@@ -274,13 +243,15 @@ class UserManagementViewModel(
             )
         ) {
             userRepository.setActive(id, false)
+            local.update { it.copy(confirmSuspendId = null) }
         }
     }
 
     fun onRestore(userId: Int) {
-        val user = uiState.value.users?.firstOrNull {
-            it.userId == userId
-        } ?: return
+        val user = uiState.value.users
+            ?.firstOrNull { it.userId == userId } ?: return
+
+        if (user.isActive) return
 
         save(
             UiMessage(
@@ -292,33 +263,38 @@ class UserManagementViewModel(
         }
     }
 
-    fun onMessageShown() = local.update {
-        it.copy(message = null)
+    fun onMessageShown() =
+        local.update { it.copy(message = null) }
+
+    private fun rejectSelf(user: User): Boolean {
+        if (!uiState.value.isSelf(user)) return false
+
+        local.update {
+            it.copy(
+                message = UiMessage(
+                    R.string.users_cannot_change_self,
+                    isError = true
+                )
+            )
+        }
+        return true
     }
 
     private fun save(
         done: UiMessage,
         action: suspend () -> Unit
     ) {
-        if (local.value.isSaving) return
-
-        local.update { it.copy(isSaving = true) }
-
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    local.update { it.copy(isSaving = false) }
-                }
-            ) {
-                action()
-
-                local.update {
-                    it.copy(
-                        isSaving = false,
-                        message = done
-                    )
-                }
-            }
+        launchSubmission(
+            isBusy = { local.value.isSaving },
+            setBusy = { busy ->
+                local.update { it.copy(isSaving = busy) }
+            },
+            failureMessage =
+                "The account change could not be confirmed. Check your " +
+                        "connection and the latest account details before retrying."
+        ) {
+            action()
+            local.update { it.copy(message = done) }
         }
     }
 
@@ -345,7 +321,6 @@ data class AuditLogUiState(
     val visible: List<AuditEntry>
         get() {
             val q = query.trim()
-
             return entries.orEmpty().filter {
                 (actorFilter == null || it.log.userId == actorFilter) &&
                         (
@@ -374,9 +349,8 @@ class AuditLogViewModel(
 
         AuditLogUiState(
             entries = log.withNames(users),
-            actors = users.filter {
-                it.userId in ids
-            }.sortedBy { it.fullName },
+            actors = users.filter { it.userId in ids }
+                .sortedBy { it.fullName },
             actorFilter = actor,
             query = query,
             now = LocalDateTime.now(clock)
@@ -387,13 +361,11 @@ class AuditLogViewModel(
         AuditLogUiState()
     )
 
-    fun onActorFilterChange(userId: Int?) = filters.update {
-        it.copy(first = userId)
-    }
+    fun onActorFilterChange(userId: Int?) =
+        filters.update { it.copy(first = userId) }
 
-    fun onQueryChange(value: String) = filters.update {
-        it.copy(second = value)
-    }
+    fun onQueryChange(value: String) =
+        filters.update { it.copy(second = value) }
 
     companion object {
         val Factory = viewModelFactory {
@@ -415,8 +387,7 @@ data class SystemSettingsUiState(
     val isSaving: Boolean = false,
     val message: UiMessage? = null
 ) {
-    val hasChanges: Boolean
-        get() = draft != saved
+    val hasChanges: Boolean get() = draft != saved
 }
 
 class SystemSettingsViewModel(
@@ -426,12 +397,12 @@ class SystemSettingsViewModel(
     private val local = MutableStateFlow(Local())
 
     val uiState: StateFlow<SystemSettingsUiState> =
-        combine(repository.settings, local) { saved, l ->
+        combine(repository.settings, local) { saved, current ->
             SystemSettingsUiState(
                 saved = saved,
-                draft = l.draft ?: saved,
-                isSaving = l.isSaving,
-                message = l.message
+                draft = current.draft ?: saved,
+                isSaving = current.isSaving,
+                message = current.message
             )
         }.stateIn(
             viewModelScope,
@@ -439,23 +410,17 @@ class SystemSettingsViewModel(
             SystemSettingsUiState()
         )
 
-    fun onChange(
-        change: (SystemSettings) -> SystemSettings
-    ) {
-        if (local.value.isSaving) return
-
+    fun onChange(change: (SystemSettings) -> SystemSettings) {
         local.update {
-            it.copy(
-                draft = change(
-                    it.draft ?: repository.settings.value
-                )
+            if (it.isSaving) it
+            else it.copy(
+                draft = change(it.draft ?: repository.settings.value)
             )
         }
     }
 
     fun onDiscard() {
         if (local.value.isSaving) return
-
         local.update {
             it.copy(
                 draft = null,
@@ -466,30 +431,28 @@ class SystemSettingsViewModel(
 
     fun onSave() {
         val draft = local.value.draft ?: return
-        if (local.value.isSaving) return
 
-        local.update { it.copy(isSaving = true) }
-
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    local.update { it.copy(isSaving = false) }
-                }
-            ) {
-                repository.update(draft)
-
-                local.update {
-                    Local(
-                        message = UiMessage(R.string.system_saved)
-                    )
-                }
+        launchSubmission(
+            isBusy = { local.value.isSaving },
+            setBusy = { busy ->
+                local.update { it.copy(isSaving = busy) }
+            },
+            failureMessage =
+                "System settings could not be confirmed. Your draft has " +
+                        "been kept. Check your connection before trying again."
+        ) {
+            repository.update(draft)
+            local.update {
+                it.copy(
+                    draft = null,
+                    message = UiMessage(R.string.system_saved)
+                )
             }
         }
     }
 
-    fun onMessageShown() = local.update {
-        it.copy(message = null)
-    }
+    fun onMessageShown() =
+        local.update { it.copy(message = null) }
 
     private data class Local(
         val draft: SystemSettings? = null,

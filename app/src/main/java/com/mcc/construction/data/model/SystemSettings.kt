@@ -1,19 +1,22 @@
 package com.mcc.construction.data.model
 
 /**
- * Organisation-wide settings an administrator controls. Not an ERD table yet —
- * see "Fields beyond the ERD" in docs/ARCHITECTURE.md.
+ * Organisation settings stored in public.system_settings.
  */
 data class SystemSettings(
-    /** Signed-in sessions end after this many idle minutes. */
+    /** Idle timeout applied by the Android application. */
     val sessionTimeoutMinutes: Int = 30,
-    /** Workers must pass the daily safety checklist before starting tasks. */
+
+    /** Server-enforced daily safety requirement before starting tasks. */
     val requireDailyChecklist: Boolean = true,
-    /** Workers may switch on offline mode and queue changes on the device. */
+
+    /** Allows offline mode and new offline message queuing. */
     val allowOfflineMode: Boolean = true,
-    /** Managers are notified when a material drops below its minimum level. */
+
+    /** Enables server-generated low-stock alerts. */
     val lowStockAlerts: Boolean = true,
-    /** How often devices upload queued changes in the background, in minutes. */
+
+    /** Interval between automatic foreground message sync attempts. */
     val syncIntervalMinutes: Int = 15
 ) {
     companion object {

@@ -7,10 +7,9 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mcc.construction.data.model.*
 import com.mcc.construction.data.repository.*
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 enum class IncidentField {
     SEVERITY, DESCRIPTION
@@ -34,13 +33,10 @@ data class IncidentReportUiState(
     val form: IncidentForm = IncidentForm()
 ) {
     val selectedProject: Project?
-        get() = projects.firstOrNull {
-            it.projectId == form.projectId
-        }
+        get() = projects.firstOrNull { it.projectId == form.projectId }
 
     val isUrgent: Boolean
-        get() = (form.severity?.level ?: 0) >=
-                IncidentSeverity.SERIOUS.level
+        get() = (form.severity?.level ?: 0) >= IncidentSeverity.SERIOUS.level
 }
 
 class IncidentReportViewModel(
@@ -61,21 +57,14 @@ class IncidentReportViewModel(
         combine(
             taskRepository.observeTasksAssignedTo(session.user.userId),
             projectRepository.observeProjects(),
-            if (inspectionId == null) {
-                flowOf(null)
-            } else {
-                safetyRepository.observeInspection(inspectionId)
-            }
+            if (inspectionId == null) flowOf(null)
+            else safetyRepository.observeInspection(inspectionId)
         ) { tasks, projects, inspection ->
             val mine = tasks.map { it.projectId }.toSet()
 
             Triple(
-                projects.filter {
-                    it.projectId in mine
-                }.ifEmpty {
-                    projects.filter {
-                        it.status == ProjectStatus.ACTIVE
-                    }
+                projects.filter { it.projectId in mine }.ifEmpty {
+                    projects.filter { it.status == ProjectStatus.ACTIVE }
                 },
                 projects,
                 inspection
@@ -88,7 +77,6 @@ class IncidentReportViewModel(
             if (data == null) return@combine IncidentReportUiState()
 
             val (mine, all, inspection) = data
-
             val projectId = inspection?.projectId
                 ?: current.projectId
                 ?: mine.firstOrNull()?.projectId
@@ -96,12 +84,8 @@ class IncidentReportViewModel(
             IncidentReportUiState(
                 isLoading = false,
                 projects = if (inspection != null) {
-                    all.filter {
-                        it.projectId == inspection.projectId
-                    }
-                } else {
-                    mine
-                },
+                    all.filter { it.projectId == inspection.projectId }
+                } else mine,
                 linkedInspection = inspection,
                 form = current.copy(projectId = projectId)
             )
@@ -111,47 +95,40 @@ class IncidentReportViewModel(
             IncidentReportUiState()
         )
 
-    fun onProjectSelected(projectId: Int) = form.update {
+    fun onProjectSelected(projectId: Int) = edit {
         it.copy(projectId = projectId)
     }
 
-    fun onSeveritySelected(severity: IncidentSeverity) = form.update {
+    fun onSeveritySelected(severity: IncidentSeverity) = edit {
         it.copy(
             severity = severity,
             missing = it.missing - IncidentField.SEVERITY
         )
     }
 
-    fun onDescriptionChange(text: String) = form.update {
+    fun onDescriptionChange(text: String) = edit {
         it.copy(
             description = text,
             missing = it.missing - IncidentField.DESCRIPTION
         )
     }
 
-    fun onAddPhrase(phrase: String) = form.update { current ->
-        if (current.description.contains(phrase)) {
-            return@update current
-        }
-
-        val text = listOf(
-            current.description.trimEnd(),
-            phrase
-        ).filter {
-            it.isNotEmpty()
-        }.joinToString(". ")
-
-        current.copy(
-            description = text,
-            missing = current.missing - IncidentField.DESCRIPTION
+    fun onAddPhrase(phrase: String) = edit {
+        if (it.description.contains(phrase)) it
+        else it.copy(
+            description = listOf(
+                it.description.trimEnd(),
+                phrase
+            ).filter { text -> text.isNotEmpty() }.joinToString(". "),
+            missing = it.missing - IncidentField.DESCRIPTION
         )
     }
 
-    fun onPhotoPicked(uri: String) = form.update {
+    fun onPhotoPicked(uri: String) = edit {
         it.copy(photoUri = uri)
     }
 
-    fun onRemovePhoto() = form.update {
+    fun onRemovePhoto() = edit {
         it.copy(photoUri = null)
     }
 
@@ -160,66 +137,67 @@ class IncidentReportViewModel(
         val userId = authRepository.session.value?.user?.userId ?: return
 
         if (
-            state.form.isSubmitting ||
-            state.form.submitted != null
+            form.value.isSubmitting ||
+            form.value.submitted != null ||
+            state.isLoading
         ) return
 
         val missing = buildSet {
-            if (state.form.severity == null) {
-                add(IncidentField.SEVERITY)
-            }
-            if (state.form.description.isBlank()) {
-                add(IncidentField.DESCRIPTION)
-            }
+            if (state.form.severity == null) add(IncidentField.SEVERITY)
+            if (state.form.description.isBlank()) add(IncidentField.DESCRIPTION)
         }
 
         val projectId = state.form.projectId
         val severity = state.form.severity
 
-        if (
-            missing.isNotEmpty() ||
-            projectId == null ||
-            severity == null
-        ) {
+        if (missing.isNotEmpty() || projectId == null || severity == null) {
             form.update { it.copy(missing = missing) }
             return
         }
 
         form.update {
             it.copy(
-                isSubmitting = true,
+                projectId = projectId,
                 missing = emptySet()
             )
         }
 
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    form.update { it.copy(isSubmitting = false) }
-                }
-            ) {
-                val incident = safetyRepository.reportIncident(
-                    IncidentDraft(
-                        projectId = projectId,
-                        reportedBy = userId,
-                        severity = severity,
-                        description = state.form.description.trim(),
-                        photoUris = listOfNotNull(state.form.photoUri),
-                        inspectionId =
-                            state.linkedInspection?.inspectionId
-                    )
+        launchSubmission(
+            isBusy = { form.value.isSubmitting },
+            setBusy = { busy ->
+                form.update { it.copy(isSubmitting = busy) }
+            },
+            failureMessage =
+                "The incident report could not be confirmed. Your description " +
+                        "and photo selection have been kept. Check your connection " +
+                        "and report history before trying again."
+        ) {
+            val incident = safetyRepository.reportIncident(
+                IncidentDraft(
+                    projectId = projectId,
+                    reportedBy = userId,
+                    severity = severity,
+                    description = state.form.description.trim(),
+                    photoUris = listOfNotNull(state.form.photoUri),
+                    inspectionId = state.linkedInspection?.inspectionId
                 )
+            )
 
-                val offline = !syncRepository.status.value.isOnline
-
+            if (authRepository.session.value?.user?.userId == userId) {
                 form.update {
                     it.copy(
-                        isSubmitting = false,
                         submitted = incident,
-                        submittedOffline = offline
+                        submittedOffline = false
                     )
                 }
             }
+        }
+    }
+
+    private fun edit(change: (IncidentForm) -> IncidentForm) {
+        form.update {
+            if (it.isSubmitting || it.submitted != null) it
+            else change(it)
         }
     }
 
