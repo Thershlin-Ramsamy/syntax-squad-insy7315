@@ -1,5 +1,6 @@
 package com.mcc.construction.data.remote
 
+import android.content.Context
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.Auth
 import io.github.jan.supabase.createSupabaseClient
@@ -8,16 +9,16 @@ import io.github.jan.supabase.realtime.Realtime
 import io.github.jan.supabase.storage.Storage
 import io.ktor.client.engine.okhttp.OkHttp
 
-/**
- * Owns one Supabase client for the application's real repository container.
- *
- * Auth tokens are kept in memory during this foundation stage.
- * Persistent session storage will be configured explicitly in the
- * authentication integration rather than using automatic default storage.
- */
 class SupabaseProvider(
+    context: Context,
     private val configuration: SupabaseConfig
 ) {
+
+    private val sessionStore = EncryptedSessionManager(
+        context = context.applicationContext,
+        projectUrl = configuration.url
+    )
+
     val client: SupabaseClient by lazy {
         createSupabaseClient(
             supabaseUrl = configuration.url,
@@ -26,8 +27,9 @@ class SupabaseProvider(
             httpEngine = OkHttp.create()
 
             install(Auth) {
-                autoLoadFromStorage = false
-                autoSaveToStorage = false
+                sessionManager = sessionStore
+                autoLoadFromStorage = true
+                autoSaveToStorage = true
             }
 
             install(Postgrest)
