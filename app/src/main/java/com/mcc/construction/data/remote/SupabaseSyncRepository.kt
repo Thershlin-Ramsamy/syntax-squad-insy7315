@@ -1,15 +1,12 @@
 package com.mcc.construction.data.remote
 
 import android.content.Context
-import com.mcc.construction.data.model.OfflineSync
-import com.mcc.construction.data.model.PendingChange
-import com.mcc.construction.data.model.PendingChangeType
-import com.mcc.construction.data.model.SyncOutcome
-import com.mcc.construction.data.model.SyncStatus
+import com.mcc.construction.data.model.*
 import com.mcc.construction.data.remote.dto.OfflineSyncRow
 import com.mcc.construction.data.repository.AuthRepository
 import com.mcc.construction.data.repository.SyncRepository
 import com.mcc.construction.data.repository.SyncResult
+import com.mcc.construction.data.repository.SystemSettingsRepository
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import java.time.Clock
@@ -18,14 +15,7 @@ import java.util.UUID
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.serialization.json.buildJsonObject
@@ -40,7 +30,8 @@ class SupabaseSyncRepository(
     private val gateway: BackendGateway,
     private val reads: BackendReadStore,
     scope: CoroutineScope,
-    private val clock: Clock
+    private val clock: Clock,
+    private val organisationSettings: SystemSettingsRepository? = null
 ) : SyncRepository {
 
     private val preferences = context.applicationContext
@@ -64,12 +55,8 @@ class SupabaseSyncRepository(
     )
 
     private val syncing = MutableStateFlow(false)
-
-    private val lastSynced =
-        MutableStateFlow<LocalDateTime?>(null)
-
-    private val mutableLastError =
-        MutableStateFlow<String?>(null)
+    private val lastSynced = MutableStateFlow<LocalDateTime?>(null)
+    private val mutableLastError = MutableStateFlow<String?>(null)
 
     val lastError: StateFlow<String?> =
         mutableLastError.asStateFlow()
@@ -82,12 +69,9 @@ class SupabaseSyncRepository(
         auth.session,
         outbox.entries
     ) { available, offlineMode, session, entries ->
-
         val accountId = client.auth.currentUserOrNull()?.id
 
-        val owned = if (
-            session == null || accountId == null
-        ) {
+        val owned = if (session == null || accountId == null) {
             emptyList()
         } else {
             entries.filter {
@@ -129,24 +113,64 @@ class SupabaseSyncRepository(
     )
 
     init {
-        // Foreground-process retry. This is not a background WorkManager job.
         scope.launch {
+            var nextAttemptAt = 0L
+            var previousOnline = false
+            var previousIds = emptySet<String>()
+
             while (true) {
-                try {
-                    if (
-                        network.available.value &&
-                        !offline.value &&
-                        auth.session.value != null
-                    ) {
-                        syncNow()
+                val policy = organisationSettings?.settings?.value
+
+                if (
+                    offline.value &&
+                    policy?.allowOfflineMode == false
+                ) {
+                    try {
+                        setOfflineMode(false)
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        mutableLastError.value =
+                            "The offline preference could not be updated."
                     }
-                } catch (exception: CancellationException) {
-                    throw exception
-                } catch (_: Exception) {
-                    // syncNow retains the queue and sets lastError.
                 }
 
-                delay(RETRY_MILLIS)
+                val online = network.available.value &&
+                        !offline.value &&
+                        auth.session.value != null
+
+                val ids = outbox.entries.value.map {
+                    it.operation.operationId
+                }.toSet()
+
+                val now = clock.millis()
+
+                if (
+                    online &&
+                    (
+                            !previousOnline ||
+                                    ids != previousIds ||
+                                    now >= nextAttemptAt
+                            )
+                ) {
+                    try {
+                        syncNow()
+
+                        nextAttemptAt = now +
+                                (policy?.syncIntervalMinutes ?: 15) * 60_000L
+                    } catch (exception: CancellationException) {
+                        throw exception
+                    } catch (_: Exception) {
+                        nextAttemptAt = now + RETRY_MILLIS
+                    }
+                }
+
+                previousOnline = online
+                previousIds = outbox.entries.value.map {
+                    it.operation.operationId
+                }.toSet()
+
+                delay(1_000L)
             }
         }
     }
@@ -170,9 +194,15 @@ class SupabaseSyncRepository(
         }
     }
 
-    override suspend fun setOfflineMode(
-        enabled: Boolean
-    ) {
+    override suspend fun setOfflineMode(enabled: Boolean) {
+        check(
+            !enabled ||
+                    organisationSettings?.settings?.value?.allowOfflineMode !=
+                    false
+        ) {
+            "Offline mode is disabled by the administrator."
+        }
+
         check(
             preferences.edit()
                 .putBoolean("offline_mode", enabled)
@@ -192,10 +222,7 @@ class SupabaseSyncRepository(
         try {
             outbox.awaitReady()
 
-            if (
-                !network.available.value ||
-                offline.value
-            ) {
+            if (!network.available.value || offline.value) {
                 return SyncResult.Offline
             }
 
@@ -215,40 +242,32 @@ class SupabaseSyncRepository(
                 return SyncResult.Success(0)
             }
 
+            lastSynced.value = null
             syncing.value = true
             mutableLastError.value = null
 
             var uploaded = 0
 
             for (entry in pending) {
-                if (
-                    !network.available.value ||
-                    offline.value
-                ) {
+                if (!network.available.value || offline.value) {
                     return SyncResult.Offline
                 }
 
                 if (
                     auth.session.value?.user?.userId !=
                     applicationUserId ||
-                    client.auth.currentUserOrNull()?.id !=
-                    accountId
+                    client.auth.currentUserOrNull()?.id != accountId
                 ) {
                     throw BackendAccountChangedException()
                 }
 
-                // execute() verifies the original Auth UUID again.
                 gateway.execute(entry.operation)
-
-                // A crash before this removal is safe: retry uses the same UUID.
                 outbox.acknowledge(entry.operation.operationId)
-
                 uploaded++
             }
 
             lastSynced.value = LocalDateTime.now(clock)
 
-            // Sync history is separate from the completed message uploads.
             try {
                 if (
                     auth.session.value?.user?.userId ==
@@ -279,7 +298,6 @@ class SupabaseSyncRepository(
         } catch (exception: Exception) {
             mutableLastError.value =
                 "Sync could not finish. Pending messages were retained."
-
             throw exception
         } finally {
             syncing.value = false
