@@ -17,12 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -34,16 +29,15 @@ class SupabaseAuthRepository(
     private val clock: Clock
 ) : AuthRepository {
 
-    private val mutex = Mutex()
+    var onExplicitSignIn: (Int) -> Unit = {}
 
-    private val mutableSession =
-        MutableStateFlow<UserSession?>(null)
+    private val mutex = Mutex()
+    private val mutableSession = MutableStateFlow<UserSession?>(null)
 
     override val session: StateFlow<UserSession?> =
         mutableSession.asStateFlow()
 
-    private val mutableProfileReadFailed =
-        MutableStateFlow(false)
+    private val mutableProfileReadFailed = MutableStateFlow(false)
 
     val profileReadFailed: StateFlow<Boolean> =
         mutableProfileReadFailed.asStateFlow()
@@ -106,6 +100,7 @@ class SupabaseAuthRepository(
                     signedInAt = LocalDateTime.now(clock)
                 )
 
+                onExplicitSignIn(profile.userId)
                 mutableSession.value = applicationSession
 
                 SignInResult.Success(applicationSession)
@@ -121,8 +116,6 @@ class SupabaseAuthRepository(
                 mutableSession.value = null
 
                 if (exception.error == "invalid_credentials") {
-                    // Auth deliberately does not distinguish unknown
-                    // accounts from incorrect passwords.
                     SignInResult.InvalidPassword
                 } else {
                     throw exception
@@ -131,15 +124,12 @@ class SupabaseAuthRepository(
                 client.auth.clearSession()
                 mutableSession.value = null
                 mutableProfileReadFailed.value = true
-
                 throw exception
             }
         }
     }
 
-    override suspend fun requestPasswordReset(
-        email: String
-    ) {
+    override suspend fun requestPasswordReset(email: String) {
         client.auth.awaitInitialization()
 
         client.auth.resetPasswordForEmail(
@@ -156,8 +146,7 @@ class SupabaseAuthRepository(
             } catch (exception: CancellationException) {
                 throw exception
             } catch (_: Exception) {
-                // Local sign-out must still complete when the server
-                // cannot be reached.
+                // Local sign-out still completes if the server is unavailable.
             } finally {
                 withContext(NonCancellable) {
                     client.auth.clearSession()
@@ -206,35 +195,26 @@ class SupabaseAuthRepository(
         } catch (exception: CancellationException) {
             throw exception
         } catch (_: Exception) {
-            // Do not present an unverified profile as authenticated.
-            // Keep the SDK session so profile validation can retry.
             mutableSession.value = null
             mutableProfileReadFailed.value = true
         }
     }
 
-    private suspend fun readProfile(
-        accountId: String
-    ): UserRow? {
+    private suspend fun readProfile(accountId: String): UserRow? {
         val rows = client.from("users").select {
             filter {
                 eq("auth_user_id", accountId)
             }
         }.decodeList<UserRow>()
 
-        if (
-            client.auth.currentUserOrNull()?.id !=
-            accountId
-        ) {
+        if (client.auth.currentUserOrNull()?.id != accountId) {
             throw BackendAccountChangedException()
         }
 
         return rows.singleOrNull()
     }
 
-    private fun mapUser(
-        row: UserRow
-    ): User {
+    private fun mapUser(row: UserRow): User {
         val role = requireNotNull(
             UserRole.fromRoleId(row.roleId)
         ) {

@@ -9,24 +9,16 @@ import com.mcc.construction.data.repository.AuthRepository
 import com.mcc.construction.data.repository.NotificationRepository
 import com.mcc.construction.data.repository.SyncRepository
 import com.mcc.construction.ui.common.appContainer
+import com.mcc.construction.ui.common.runBackendMutation
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class ProfileUiState(
-    /** Null only for the moment between signing out and leaving the screen. */
     val user: User? = null,
     val unreadNotifications: Int = 0,
     val pendingChanges: Int = 0,
     val isSignOutDialogVisible: Boolean = false,
-    /** Set once sign-out has finished; the screen then leaves for sign-in. */
     val isSignedOut: Boolean = false
 )
 
@@ -40,8 +32,13 @@ class ProfileViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val unread = authRepository.session.flatMapLatest { session ->
-        if (session == null) flowOf(0)
-        else notificationRepository.observeUnreadCount(session.user.userId)
+        if (session == null) {
+            flowOf(0)
+        } else {
+            notificationRepository.observeUnreadCount(
+                session.user.userId
+            )
+        }
     }
 
     val uiState: StateFlow<ProfileUiState> = combine(
@@ -60,10 +57,11 @@ class ProfileViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-        initialValue = ProfileUiState(user = authRepository.session.value?.user)
+        initialValue = ProfileUiState(
+            user = authRepository.session.value?.user
+        )
     )
 
-    /** Sign-out asks first: a stray tap with a gloved thumb should not end the session. */
     fun onSignOutClick() {
         dialog.update { it.copy(isVisible = true) }
     }
@@ -74,8 +72,16 @@ class ProfileViewModel(
 
     fun onSignOutConfirm() {
         viewModelScope.launch {
-            authRepository.signOut()
-            dialog.update { DialogState(isVisible = false, isSignedOut = true) }
+            runBackendMutation {
+                authRepository.signOut()
+
+                dialog.update {
+                    DialogState(
+                        isVisible = false,
+                        isSignedOut = true
+                    )
+                }
+            }
         }
     }
 

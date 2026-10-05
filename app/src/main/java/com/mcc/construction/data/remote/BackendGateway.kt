@@ -10,9 +10,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.put
 
 class BackendSessionRequiredException :
-    IllegalStateException(
-        "Sign in before performing this operation."
-    )
+    IllegalStateException("Sign in before performing this operation.")
 
 class BackendAccountChangedException :
     IllegalStateException(
@@ -22,14 +20,13 @@ class BackendAccountChangedException :
 /**
  * Calls the validated PostgreSQL operation gateway.
  *
- * No automatic retries are performed here. A caller retrying a failed
- * network request must reuse the same BackendOperation.
- *
+ * A caller retrying a failed network request must reuse the same operation.
  * Server errors and coroutine cancellation propagate to the caller.
  */
 class BackendGateway(
     private val client: SupabaseClient,
-    private val refreshBus: BackendRefreshBus
+    private val refreshBus: BackendRefreshBus,
+    private val canWrite: () -> Boolean = { true }
 ) {
     val json: Json = Json {
         ignoreUnknownKeys = true
@@ -54,24 +51,17 @@ class BackendGateway(
         )
     }
 
-    suspend fun execute(
-        operation: BackendOperation
-    ): JsonObject {
+    suspend fun execute(operation: BackendOperation): JsonObject {
+        check(canWrite()) {
+            "This action requires an online connection."
+        }
+
         requireMatchingAccount(operation)
 
         val parameters = buildJsonObject {
-            put(
-                "p_operation_id",
-                operation.operationId
-            )
-            put(
-                "p_action",
-                operation.action.name
-            )
-            put(
-                "p_payload",
-                operation.payload
-            )
+            put("p_operation_id", operation.operationId)
+            put("p_action", operation.action.name)
+            put("p_payload", operation.payload)
         }
 
         val response = client.postgrest.rpc(
@@ -79,28 +69,21 @@ class BackendGateway(
             parameters = parameters
         ).decodeAs<JsonObject>()
 
-        // Avoid applying an old account's response after an Auth switch.
         requireMatchingAccount(operation)
-
         refreshBus.invalidate()
 
-        return response;
+        return response
     }
 
     suspend inline fun <reified T> executeAs(
         operation: BackendOperation
     ): T {
-        val response = execute(operation)
-
-        return json.decodeFromJsonElement<T>(response)
+        return json.decodeFromJsonElement<T>(execute(operation))
     }
 
-    private fun requireMatchingAccount(
-        operation: BackendOperation
-    ) {
-        val currentUserId =
-            client.auth.currentUserOrNull()?.id
-                ?: throw BackendSessionRequiredException()
+    private fun requireMatchingAccount(operation: BackendOperation) {
+        val currentUserId = client.auth.currentUserOrNull()?.id
+            ?: throw BackendSessionRequiredException()
 
         if (client.auth.currentSessionOrNull() == null) {
             throw BackendSessionRequiredException()

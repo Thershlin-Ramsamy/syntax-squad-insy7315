@@ -11,10 +11,8 @@ import com.mcc.construction.data.repository.AuthRepository
 import com.mcc.construction.data.repository.SettingsRepository
 import com.mcc.construction.data.repository.SyncRepository
 import com.mcc.construction.ui.common.appContainer
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.stateIn
+import com.mcc.construction.ui.common.runBackendMutation
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 data class SettingsUiState(
@@ -23,10 +21,10 @@ data class SettingsUiState(
     val syncStatus: SyncStatus = SyncStatus.Initial,
     val signedInRole: UserRole? = null,
     val appVersion: String = "",
-    /** True while the app runs on the in-memory demo data rather than a server. */
     val isDemoData: Boolean = false
 ) {
-    val isOfflineMode: Boolean get() = syncStatus.isOfflineMode
+    val isOfflineMode: Boolean
+        get() = syncStatus.isOfflineMode
 }
 
 class SettingsViewModel(
@@ -54,8 +52,10 @@ class SettingsViewModel(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
         initialValue = SettingsUiState(
-            notificationsEnabled = settingsRepository.settings.value.notificationsEnabled,
-            vibrationEnabled = settingsRepository.settings.value.vibrationEnabled,
+            notificationsEnabled =
+                settingsRepository.settings.value.notificationsEnabled,
+            vibrationEnabled =
+                settingsRepository.settings.value.vibrationEnabled,
             syncStatus = syncRepository.status.value,
             signedInRole = authRepository.session.value?.role,
             appVersion = appVersion,
@@ -64,15 +64,27 @@ class SettingsViewModel(
     )
 
     fun onNotificationsChange(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setNotificationsEnabled(enabled) }
+        viewModelScope.launch {
+            runBackendMutation {
+                settingsRepository.setNotificationsEnabled(enabled)
+            }
+        }
     }
 
     fun onVibrationChange(enabled: Boolean) {
-        viewModelScope.launch { settingsRepository.setVibrationEnabled(enabled) }
+        viewModelScope.launch {
+            runBackendMutation {
+                settingsRepository.setVibrationEnabled(enabled)
+            }
+        }
     }
 
     fun onOfflineModeChange(enabled: Boolean) {
-        viewModelScope.launch { syncRepository.setOfflineMode(enabled) }
+        viewModelScope.launch {
+            runBackendMutation {
+                syncRepository.setOfflineMode(enabled)
+            }
+        }
     }
 
     companion object {
@@ -85,7 +97,8 @@ class SettingsViewModel(
                     settingsRepository = container.settingsRepository,
                     syncRepository = container.syncRepository,
                     authRepository = container.authRepository,
-                    appVersion = "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    appVersion =
+                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
                     isDemoData = container.demoAccounts.isNotEmpty()
                 )
             }

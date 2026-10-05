@@ -6,6 +6,8 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.storage.storage
 import io.ktor.http.ContentType
 import kotlin.time.Duration.Companion.minutes
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -14,6 +16,14 @@ class BackendStorageService(
     private val reader: AndroidUploadReader,
     private val writes: BackendRepositorySupport
 ) {
+    private data class CachedUrl(
+        val url: String,
+        val createdAt: Long
+    )
+
+    private val signedUrls = mutableMapOf<String, CachedUrl>()
+    private val signedUrlMutex = Mutex()
+    private var cachedAccountId: String? = null
 
     suspend fun uploadPhoto(
         projectId: Int,
@@ -37,9 +47,7 @@ class BackendStorageService(
         )
     }
 
-    suspend fun photoUrls(
-        paths: List<String>
-    ): List<String> {
+    suspend fun photoUrls(paths: List<String>): List<String> {
         return paths.map { path ->
             signedUrl(
                 bucketId = SupabaseConfig.PHOTO_BUCKET,
@@ -60,20 +68,47 @@ class BackendStorageService(
 
         val accountId = currentAccountId()
 
-        val url = client.storage.from(bucketId)
-            .createSignedUrl(
+        return signedUrlMutex.withLock {
+            checkAccount(accountId)
+
+            if (cachedAccountId != accountId) {
+                signedUrls.clear()
+                cachedAccountId = accountId
+            }
+
+            val cacheKey = "$bucketId:$path"
+            val now = System.currentTimeMillis()
+            val cached = signedUrls[cacheKey]
+
+            if (
+                cached != null &&
+                now >= cached.createdAt &&
+                now - cached.createdAt < 8 * 60_000L
+            ) {
+                return@withLock cached.url
+            }
+
+            val url = client.storage.from(bucketId).createSignedUrl(
                 path = path,
                 expiresIn = 10.minutes
             )
 
-        checkAccount(accountId)
+            checkAccount(accountId)
 
-        return url
+            if (signedUrls.size >= 500) {
+                signedUrls.clear()
+            }
+
+            signedUrls[cacheKey] = CachedUrl(
+                url = url,
+                createdAt = now
+            )
+
+            url
+        }
     }
 
-    suspend fun deleteRemovedPhoto(
-        path: String
-    ) {
+    suspend fun deleteRemovedPhoto(path: String) {
         val accountId = currentAccountId()
 
         client.storage.from(SupabaseConfig.PHOTO_BUCKET)
@@ -129,13 +164,8 @@ class BackendStorageService(
             ?: throw BackendSessionRequiredException()
     }
 
-    private fun checkAccount(
-        expectedAccountId: String
-    ) {
-        if (
-            client.auth.currentUserOrNull()?.id !=
-            expectedAccountId
-        ) {
+    private fun checkAccount(expectedAccountId: String) {
+        if (client.auth.currentUserOrNull()?.id != expectedAccountId) {
             throw BackendAccountChangedException()
         }
     }

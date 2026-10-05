@@ -21,8 +21,7 @@ class SupabaseSafetyRepository(
     private val storage: BackendStorageService
 ) : SafetyRepository {
 
-    override fun observeChecklistItems():
-            Flow<List<SafetyChecklistItem>> {
+    override fun observeChecklistItems(): Flow<List<SafetyChecklistItem>> {
         return reads.observeRows<SafetyChecklistRow>(
             table = "safety_checklist_items",
             primaryKey = "item_id"
@@ -45,14 +44,13 @@ class SupabaseSafetyRepository(
         }
     }
 
-    override fun observeInspections():
-            Flow<List<SafetyInspection>> {
+    override fun observeInspections(): Flow<List<SafetyInspection>> {
         return reads.observeRows<SafetyInspectionRow>(
             table = "safety_inspections",
             primaryKey = "inspection_id"
         ).map { rows ->
-            rows.map { row ->
-                mapInspection(row)
+            rows.map {
+                mapInspection(it)
             }.sortedWith(
                 compareByDescending<SafetyInspection> {
                     it.date
@@ -67,9 +65,7 @@ class SupabaseSafetyRepository(
         projectId: Int
     ): Flow<List<SafetyInspection>> {
         return observeInspections().map { inspections ->
-            inspections.filter {
-                it.projectId == projectId
-            }
+            inspections.filter { it.projectId == projectId }
         }
     }
 
@@ -93,16 +89,18 @@ class SupabaseSafetyRepository(
         }
     }
 
-    override fun observeIncidents():
-            Flow<List<IncidentReport>> {
-        return reads.observeRows<IncidentRow>(
-            table = "incident_reports",
-            primaryKey = "incident_id"
-        ).map { rows ->
+    override fun observeIncidents(): Flow<List<IncidentReport>> {
+        return reads.mapRows(
+            "incident_reports",
+            reads.observeRows<IncidentRow>(
+                table = "incident_reports",
+                primaryKey = "incident_id"
+            )
+        ) { rows ->
             rows.sortedByDescending {
                 it.dateReported
-            }.map { row ->
-                mapIncident(row)
+            }.map {
+                mapIncident(it)
             }
         }
     }
@@ -142,8 +140,8 @@ class SupabaseSafetyRepository(
         draft: IncidentDraft
     ): IncidentReport {
         writes.requireCurrentUser(draft.reportedBy)
-
         require(draft.projectId > 0)
+
         require(draft.description.isNotBlank()) {
             "Describe the incident."
         }
@@ -172,7 +170,9 @@ class SupabaseSafetyRepository(
 
                 put(
                     "photo_paths",
-                    JsonArray(paths.map { JsonPrimitive(it) })
+                    JsonArray(
+                        paths.map { JsonPrimitive(it) }
+                    )
                 )
             }
         )

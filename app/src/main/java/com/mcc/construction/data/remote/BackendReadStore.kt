@@ -7,17 +7,7 @@ import io.github.jan.supabase.postgrest.query.Order
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -59,8 +49,6 @@ class BackendReadStore(
                 } else {
                     flow {
                         var previousRows = emptyList<JsonObject>()
-
-                        // Clear the previous account's data immediately.
                         emit(previousRows)
 
                         val periodicRefresh = flow {
@@ -75,7 +63,8 @@ class BackendReadStore(
                             refreshBus.revision.map { Unit }
                         ).collect {
                             if (
-                                client.auth.currentUserOrNull()?.id != accountId
+                                client.auth.currentUserOrNull()?.id !=
+                                accountId
                             ) {
                                 emit(emptyList())
                                 return@collect
@@ -85,14 +74,14 @@ class BackendReadStore(
                                 val rows = fetchTable(table, primaryKey)
 
                                 if (
-                                    client.auth.currentUserOrNull()?.id != accountId
+                                    client.auth.currentUserOrNull()?.id !=
+                                    accountId
                                 ) {
                                     emit(emptyList())
                                     return@collect
                                 }
 
                                 previousRows = rows
-
                                 mutableFailedTables.update {
                                     it - table
                                 }
@@ -106,7 +95,8 @@ class BackendReadStore(
                                 }
 
                                 if (
-                                    client.auth.currentUserOrNull()?.id == accountId
+                                    client.auth.currentUserOrNull()?.id ==
+                                    accountId
                                 ) {
                                     emit(previousRows)
                                 } else {
@@ -117,18 +107,44 @@ class BackendReadStore(
                     }
                 }
             }
-            .distinctUntilChanged()
     }
 
     inline fun <reified T> observeRows(
         table: String,
         primaryKey: String
     ): Flow<List<T>> {
-        return observeTable(table, primaryKey).map { rows ->
+        return mapRows(
+            table,
+            observeTable(table, primaryKey)
+        ) { rows ->
             json.decodeFromJsonElement(
                 kotlinx.serialization.serializer<List<T>>(),
                 JsonArray(rows)
             )
+        }
+    }
+
+    fun <R, T> mapRows(
+        table: String,
+        source: Flow<List<R>>,
+        transform: suspend (List<R>) -> List<T>
+    ): Flow<List<T>> = flow {
+        var previous = emptyList<T>()
+
+        source.collect { rows ->
+            val mapped = try {
+                transform(rows)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                mutableFailedTables.update {
+                    it + table
+                }
+                previous
+            }
+
+            previous = mapped
+            emit(mapped)
         }
     }
 
@@ -147,11 +163,8 @@ class BackendReadStore(
 
             rows.addAll(page)
 
-            if (page.isEmpty()) {
-                break
-            }
+            if (page.isEmpty()) break
 
-            // Continue until an empty page, even if the server caps page size.
             offset += page.size.toLong()
         }
 

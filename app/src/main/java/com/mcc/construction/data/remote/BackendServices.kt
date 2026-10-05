@@ -22,12 +22,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-class BackendServices(
-    context: Context
-) {
-
-    private val applicationContext =
-        context.applicationContext
+class BackendServices(context: Context) {
+    private val applicationContext = context.applicationContext
 
     val clock: Clock = Clock.system(
         ZoneId.of("Africa/Johannesburg")
@@ -43,12 +39,15 @@ class BackendServices(
     )
 
     val client: SupabaseClient = provider.client
-
     val refreshBus = BackendRefreshBus()
 
+    @Volatile
+    var canWrite: () -> Boolean = { true }
+
     val gateway = BackendGateway(
-        client,
-        refreshBus
+        client = client,
+        refreshBus = refreshBus,
+        canWrite = { canWrite() }
     )
 
     val writes = BackendRepositorySupport(
@@ -79,24 +78,21 @@ class BackendServices(
 
     val authRepository: AuthRepository = authentication
 
-    val userRepository: UserRepository =
-        SupabaseUserRepository(
-            reads,
-            writes
-        )
+    val userRepository: UserRepository = SupabaseUserRepository(
+        reads,
+        writes
+    )
 
-    val projectRepository: ProjectRepository =
-        SupabaseProjectRepository(
-            reads
-        )
+    val projectRepository: ProjectRepository = SupabaseProjectRepository(
+        reads
+    )
 
-    val taskRepository: TaskRepository =
-        SupabaseTaskRepository(
-            client,
-            reads,
-            writes,
-            storage
-        )
+    val taskRepository: TaskRepository = SupabaseTaskRepository(
+        client,
+        reads,
+        writes,
+        storage
+    )
 
     val attendanceRepository: AttendanceRepository =
         SupabaseAttendanceRepository(
@@ -126,16 +122,13 @@ class BackendServices(
     )
 
     val documentRepository: FileDocumentRepository =
-        SupabaseDocumentRepository(
-            documentService
-        )
+        SupabaseDocumentRepository(documentService)
 
-    val safetyRepository: SafetyRepository =
-        SupabaseSafetyRepository(
-            reads,
-            writes,
-            storage
-        )
+    val safetyRepository: SafetyRepository = SupabaseSafetyRepository(
+        reads,
+        writes,
+        storage
+    )
 
     val notificationRepository: NotificationRepository =
         SupabaseNotificationRepository(
@@ -143,30 +136,26 @@ class BackendServices(
             writes
         )
 
-    val messageRepository: MessageRepository =
-        SupabaseMessageRepository(
-            reads,
-            writes,
-            userRepository
-        )
+    val messageRepository: MessageRepository = SupabaseMessageRepository(
+        reads,
+        writes,
+        userRepository
+    )
 
-    val auditLogRepository: AuditLogRepository =
-        SupabaseAuditLogRepository(
-            reads
-        )
+    val auditLogRepository: AuditLogRepository = SupabaseAuditLogRepository(
+        reads
+    )
 
-    val settingsRepository: SettingsRepository =
-        LocalSettingsRepository(
-            applicationContext
-        )
+    val settingsRepository: SettingsRepository = LocalSettingsRepository(
+        applicationContext
+    )
 
-    val organisationSettings =
-        SupabaseSystemSettingsRepository(
-            client,
-            writes,
-            refreshBus,
-            scope
-        )
+    val organisationSettings = SupabaseSystemSettingsRepository(
+        client,
+        writes,
+        refreshBus,
+        scope
+    )
 
     val systemSettingsRepository: SystemSettingsRepository =
         organisationSettings
