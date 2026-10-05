@@ -1,9 +1,9 @@
 package com.mcc.construction.ui.screens.worker
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.lifecycle.viewModelScope
 import com.mcc.construction.R
 import com.mcc.construction.data.model.Attendance
 import com.mcc.construction.data.repository.AttendanceRepository
@@ -11,7 +11,7 @@ import com.mcc.construction.data.repository.AuthRepository
 import com.mcc.construction.data.repository.SyncRepository
 import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import com.mcc.construction.ui.format.formatHours
 import java.time.Clock
 import java.time.DayOfWeek
@@ -20,7 +20,6 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 data class AttendanceUiState(
     val isLoading: Boolean = true,
@@ -32,8 +31,7 @@ data class AttendanceUiState(
     val isUpdating: Boolean = false,
     val message: UiMessage? = null
 ) {
-    val isClockedIn: Boolean
-        get() = openShift != null
+    val isClockedIn: Boolean get() = openShift != null
 }
 
 class AttendanceViewModel(
@@ -47,11 +45,8 @@ class AttendanceViewModel(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     private val shifts = authRepository.session.flatMapLatest { session ->
-        if (session == null) {
-            flowOf(null)
-        } else {
-            attendanceRepository.observeAttendance(session.user.userId)
-        }
+        if (session == null) flowOf(null)
+        else attendanceRepository.observeAttendance(session.user.userId)
     }
 
     val uiState: StateFlow<AttendanceUiState> =
@@ -61,9 +56,7 @@ class AttendanceViewModel(
                 TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)
             )
             val closed = all.orEmpty().filter { !it.isOpen }
-            val thisWeek = closed.filter {
-                !it.date.isBefore(weekStart)
-            }
+            val thisWeek = closed.filter { !it.date.isBefore(weekStart) }
 
             AttendanceUiState(
                 isLoading = all == null,
@@ -83,48 +76,42 @@ class AttendanceViewModel(
 
     fun onClockInOut() {
         val userId = authRepository.session.value?.user?.userId ?: return
-        if (transient.value.isUpdating) return
+        val state = uiState.value
+        if (state.isLoading) return
 
-        transient.update { it.copy(isUpdating = true) }
+        val wasClockedIn = state.isClockedIn
 
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    transient.update { it.copy(isUpdating = false) }
-                }
-            ) {
-                val offline = !syncRepository.status.value.isOnline
+        launchSubmission(
+            isBusy = { transient.value.isUpdating },
+            setBusy = { busy ->
+                transient.update { it.copy(isUpdating = busy) }
+            },
+            failureMessage =
+                "Attendance could not be confirmed. Check your connection " +
+                        "and shift history before trying again."
+        ) {
+            val feedback = if (wasClockedIn) {
+                val shift = attendanceRepository.clockOut(userId)
+                    ?: error("No shift was returned.")
 
-                val message = if (uiState.value.isClockedIn) {
-                    val shift = attendanceRepository.clockOut(userId)
-
-                    UiMessage(
-                        if (offline) {
-                            R.string.attendance_clocked_out_offline
-                        } else {
-                            R.string.attendance_clocked_out_message
-                        },
-                        listOf(
-                            shift?.clockOut?.format(TIME).orEmpty(),
-                            formatHours(shift?.totalHours ?: 0.0)
-                        )
+                UiMessage(
+                    R.string.attendance_clocked_out_message,
+                    listOf(
+                        shift.clockOut?.format(TIME).orEmpty(),
+                        formatHours(shift.totalHours ?: 0.0)
                     )
-                } else {
-                    val shift = attendanceRepository.clockIn(userId)
+                )
+            } else {
+                val shift = attendanceRepository.clockIn(userId)
 
-                    UiMessage(
-                        if (offline) {
-                            R.string.attendance_clocked_in_offline
-                        } else {
-                            R.string.attendance_clocked_in_message
-                        },
-                        listOf(shift.clockIn.format(TIME))
-                    )
-                }
+                UiMessage(
+                    R.string.attendance_clocked_in_message,
+                    listOf(shift.clockIn.format(TIME))
+                )
+            }
 
-                transient.update {
-                    it.copy(isUpdating = false, message = message)
-                }
+            if (authRepository.session.value?.user?.userId == userId) {
+                transient.update { it.copy(message = feedback) }
             }
         }
     }
@@ -141,9 +128,7 @@ class AttendanceViewModel(
     companion object {
         private const val STOP_TIMEOUT_MS = 5_000L
         private const val RECENT_SHIFTS = 7
-
-        private val TIME: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("HH:mm")
+        private val TIME = DateTimeFormatter.ofPattern("HH:mm")
 
         val Factory = viewModelFactory {
             initializer {

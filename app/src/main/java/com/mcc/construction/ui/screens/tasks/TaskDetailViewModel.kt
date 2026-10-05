@@ -6,15 +6,15 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mcc.construction.R
 import com.mcc.construction.data.model.*
+import com.mcc.construction.data.model.Task
 import com.mcc.construction.data.repository.*
 import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import java.time.Clock
 import java.time.LocalDate
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 data class TaskDetailUiState(
     val isLoading: Boolean = true,
@@ -28,8 +28,7 @@ data class TaskDetailUiState(
     val today: LocalDate = LocalDate.MIN,
     val message: UiMessage? = null
 ) {
-    val isNotFound: Boolean
-        get() = !isLoading && task == null
+    val isNotFound: Boolean get() = !isLoading && task == null
 
     val nextStatus: TaskStatus?
         get() = when (task?.status) {
@@ -39,8 +38,7 @@ data class TaskDetailUiState(
         }
 
     val canAddPhotos: Boolean
-        get() = canUpdate &&
-                task?.status != TaskStatus.COMPLETED
+        get() = canUpdate && task?.status != TaskStatus.COMPLETED
 }
 
 class TaskDetailViewModel(
@@ -58,13 +56,9 @@ class TaskDetailViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     private val taskAndProject =
         taskRepository.observeTask(taskId).flatMapLatest { task ->
-            if (task == null) {
-                flowOf(null to null)
-            } else {
-                projectRepository.observeProject(task.projectId).map {
-                    task to it
-                }
-            }
+            if (task == null) flowOf(null to null)
+            else projectRepository.observeProject(task.projectId)
+                .map { task to it }
         }
 
     private val assignees = combine(
@@ -109,12 +103,9 @@ class TaskDetailViewModel(
         val state = uiState.value
         val next = state.nextStatus ?: return
 
-        if (!state.canUpdate || state.isUpdating) return
+        if (!state.canUpdate || transient.value.isUpdating) return
 
-        if (
-            next == TaskStatus.COMPLETED &&
-            state.photos.isEmpty()
-        ) {
+        if (next == TaskStatus.COMPLETED && state.photos.isEmpty()) {
             transient.update { it.copy(isDialogVisible = true) }
             return
         }
@@ -123,6 +114,14 @@ class TaskDetailViewModel(
     }
 
     fun onCompleteWithoutPhoto() {
+        val state = uiState.value
+
+        if (
+            !state.canUpdate ||
+            state.nextStatus != TaskStatus.COMPLETED ||
+            transient.value.isUpdating
+        ) return
+
         transient.update { it.copy(isDialogVisible = false) }
         updateStatus(TaskStatus.COMPLETED)
     }
@@ -133,72 +132,91 @@ class TaskDetailViewModel(
 
     fun onPhotosPicked(uris: List<String>) {
         val userId = authRepository.session.value?.user?.userId ?: return
+        val state = uiState.value
 
         if (
             uris.isEmpty() ||
-            !uiState.value.canAddPhotos ||
+            !state.canAddPhotos ||
             transient.value.isUpdating
         ) return
 
-        transient.update {
-            it.copy(
-                isDialogVisible = false,
-                isUpdating = true
-            )
-        }
+        val room = (MAX_PHOTOS - state.photos.size).coerceAtLeast(0)
+        val selected = uris.distinct().take(room)
 
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    transient.update { it.copy(isUpdating = false) }
-                }
-            ) {
-                val room = MAX_PHOTOS - uiState.value.photos.size
-                val added = uris.take(room.coerceAtLeast(0))
-
-                added.forEach {
-                    taskRepository.addProofPhoto(taskId, userId, it)
-                }
-
-                val message = if (added.size < uris.size) {
-                    UiMessage(
+        if (selected.isEmpty()) {
+            transient.update {
+                it.copy(
+                    message = UiMessage(
                         R.string.task_photo_limit,
                         listOf(MAX_PHOTOS),
                         isError = true
                     )
-                } else {
-                    UiMessage(
-                        R.string.task_photos_added,
-                        listOf(added.size)
+                )
+            }
+            return
+        }
+
+        launchSubmission(
+            isBusy = { transient.value.isUpdating },
+            setBusy = { busy ->
+                transient.update {
+                    it.copy(
+                        isUpdating = busy,
+                        isDialogVisible = false
                     )
                 }
+            },
+            failureMessage =
+                "The photo upload could not finish. Some photos may already " +
+                        "have uploaded. Check the task photos before selecting " +
+                        "the remaining photos again."
+        ) {
+            selected.forEach {
+                taskRepository.addProofPhoto(taskId, userId, it)
+            }
 
-                transient.update { it.copy(message = message) }
+            if (authRepository.session.value?.user?.userId == userId) {
+                transient.update {
+                    it.copy(
+                        message = if (selected.size < uris.distinct().size) {
+                            UiMessage(
+                                R.string.task_photo_limit,
+                                listOf(MAX_PHOTOS),
+                                isError = true
+                            )
+                        } else {
+                            UiMessage(
+                                R.string.task_photos_added,
+                                listOf(selected.size)
+                            )
+                        }
+                    )
+                }
             }
         }
     }
 
     fun onRemovePhoto(photoId: Int) {
+        val state = uiState.value
         if (
-            !uiState.value.canAddPhotos ||
-            transient.value.isUpdating
+            !state.canUpdate ||
+            state.photos.none { it.photoId == photoId }
         ) return
 
-        transient.update { it.copy(isUpdating = true) }
-
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    transient.update { it.copy(isUpdating = false) }
-                }
-            ) {
-                taskRepository.removeProofPhoto(photoId)
-
-                transient.update {
-                    it.copy(
-                        message = UiMessage(R.string.task_photo_removed)
-                    )
-                }
+        launchSubmission(
+            isBusy = { transient.value.isUpdating },
+            setBusy = { busy ->
+                transient.update { it.copy(isUpdating = busy) }
+            },
+            failureMessage =
+                "Photo removal could not be confirmed. Refresh the task " +
+                        "and check the photo before trying again."
+        ) {
+            taskRepository.removeProofPhoto(photoId)
+            transient.update {
+                it.copy(
+                    message = UiMessage(R.string.task_photo_removed)
+                )
             }
         }
     }
@@ -208,39 +226,30 @@ class TaskDetailViewModel(
     }
 
     private fun updateStatus(status: TaskStatus) {
-        if (
-            !uiState.value.canUpdate ||
-            transient.value.isUpdating
-        ) return
+        if (!uiState.value.canUpdate) return
 
-        transient.update { it.copy(isUpdating = true) }
+        launchSubmission(
+            isBusy = { transient.value.isUpdating },
+            setBusy = { busy ->
+                transient.update { it.copy(isUpdating = busy) }
+            },
+            failureMessage =
+                "The task update could not be confirmed. Check your connection " +
+                        "and the latest task status. Another user may have changed " +
+                        "the task."
+        ) {
+            taskRepository.updateStatus(taskId, status)
 
-        viewModelScope.launch {
-            runBackendMutation(
-                onFinally = {
-                    transient.update { it.copy(isUpdating = false) }
-                }
-            ) {
-                taskRepository.updateStatus(taskId, status)
-                val online = syncRepository.status.value.isOnline
-
-                val textRes = when {
-                    status == TaskStatus.COMPLETED && online ->
-                        R.string.task_completed_message
-                    status == TaskStatus.COMPLETED ->
-                        R.string.task_completed_offline_message
-                    online ->
-                        R.string.task_started_message
-                    else ->
-                        R.string.task_started_offline_message
-                }
-
-                transient.update {
-                    it.copy(
-                        isUpdating = false,
-                        message = UiMessage(textRes)
+            transient.update {
+                it.copy(
+                    message = UiMessage(
+                        if (status == TaskStatus.COMPLETED) {
+                            R.string.task_completed_message
+                        } else {
+                            R.string.task_started_message
+                        }
                     )
-                }
+                )
             }
         }
     }
