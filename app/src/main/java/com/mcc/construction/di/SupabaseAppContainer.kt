@@ -15,35 +15,41 @@ class SupabaseAppContainer(
 
     private val outbox = MessageOutbox(
         storage = EncryptedOutboxStorage(
-            context = applicationContext,
-            projectUrl = SupabaseConfig.fromBuildConfig().url
+            applicationContext,
+            SupabaseConfig.fromBuildConfig().url
         ),
         scope = services.scope,
         clock = services.clock
     )
 
+    private val remoteSync = SupabaseSyncRepository(
+        context = applicationContext,
+        client = services.client,
+        auth = services.authRepository,
+        network = network,
+        outbox = outbox,
+        gateway = services.gateway,
+        reads = services.reads,
+        scope = services.scope,
+        clock = services.clock
+    )
+
     override val syncRepository: SyncRepository =
-        SupabaseSyncRepository(
-            context = applicationContext,
-            client = services.client,
-            auth = services.authRepository,
-            network = network,
-            outbox = outbox,
-            gateway = services.gateway,
-            reads = services.reads,
-            scope = services.scope,
-            clock = services.clock
+        PolicySyncRepository(
+            delegate = remoteSync,
+            organisation = services.systemSettingsRepository,
+            scope = services.scope
         )
 
     override val messageRepository: MessageRepository =
         OfflineMessageRepository(
-            client = services.client,
-            auth = services.authRepository,
-            delegate = services.messageRepository,
-            users = services.userRepository,
-            outbox = outbox,
-            gateway = services.gateway,
-            sync = syncRepository
+            services.client,
+            services.authRepository,
+            services.messageRepository,
+            services.userRepository,
+            outbox,
+            services.gateway,
+            syncRepository
         )
 
     override val authRepository = services.authRepository

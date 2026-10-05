@@ -7,13 +7,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.mcc.construction.BuildConfig
 import com.mcc.construction.data.model.SyncStatus
 import com.mcc.construction.data.model.UserRole
-import com.mcc.construction.data.repository.AuthRepository
-import com.mcc.construction.data.repository.SettingsRepository
-import com.mcc.construction.data.repository.SyncRepository
+import com.mcc.construction.data.repository.*
+import com.mcc.construction.ui.common.BackendFeedback
 import com.mcc.construction.ui.common.appContainer
-import com.mcc.construction.ui.common.runBackendMutation
+import com.mcc.construction.ui.common.launchSubmission
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 
 data class SettingsUiState(
     val notificationsEnabled: Boolean = true,
@@ -23,8 +21,7 @@ data class SettingsUiState(
     val appVersion: String = "",
     val isDemoData: Boolean = false
 ) {
-    val isOfflineMode: Boolean
-        get() = syncStatus.isOfflineMode
+    val isOfflineMode: Boolean get() = syncStatus.isOfflineMode
 }
 
 class SettingsViewModel(
@@ -34,6 +31,8 @@ class SettingsViewModel(
     appVersion: String,
     isDemoData: Boolean
 ) : ViewModel() {
+
+    private var isSaving = false
 
     val uiState: StateFlow<SettingsUiState> = combine(
         settingsRepository.settings,
@@ -49,9 +48,9 @@ class SettingsViewModel(
             isDemoData = isDemoData
         )
     }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
-        initialValue = SettingsUiState(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000L),
+        SettingsUiState(
             notificationsEnabled =
                 settingsRepository.settings.value.notificationsEnabled,
             vibrationEnabled =
@@ -64,42 +63,52 @@ class SettingsViewModel(
     )
 
     fun onNotificationsChange(enabled: Boolean) {
-        viewModelScope.launch {
-            runBackendMutation {
-                settingsRepository.setNotificationsEnabled(enabled)
-            }
+        save {
+            settingsRepository.setNotificationsEnabled(enabled)
         }
     }
 
     fun onVibrationChange(enabled: Boolean) {
-        viewModelScope.launch {
-            runBackendMutation {
-                settingsRepository.setVibrationEnabled(enabled)
-            }
+        save {
+            settingsRepository.setVibrationEnabled(enabled)
         }
     }
 
     fun onOfflineModeChange(enabled: Boolean) {
-        viewModelScope.launch {
-            runBackendMutation {
-                syncRepository.setOfflineMode(enabled)
-            }
+        save {
+            syncRepository.setOfflineMode(enabled)
+        }
+    }
+
+    private fun save(action: suspend () -> Unit) {
+        if (isSaving) {
+            BackendFeedback.reportFailure(
+                "A settings change is still being saved. Try again shortly."
+            )
+            return
+        }
+
+        launchSubmission(
+            isBusy = { isSaving },
+            setBusy = { isSaving = it },
+            failureMessage =
+                "The settings change could not be saved. Your previous " +
+                        "settings remain selected."
+        ) {
+            action()
         }
     }
 
     companion object {
-        private const val STOP_TIMEOUT_MS = 5_000L
-
         val Factory = viewModelFactory {
             initializer {
-                val container = appContainer()
+                val c = appContainer()
                 SettingsViewModel(
-                    settingsRepository = container.settingsRepository,
-                    syncRepository = container.syncRepository,
-                    authRepository = container.authRepository,
-                    appVersion =
-                        "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
-                    isDemoData = container.demoAccounts.isNotEmpty()
+                    c.settingsRepository,
+                    c.syncRepository,
+                    c.authRepository,
+                    "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})",
+                    c.demoAccounts.isNotEmpty()
                 )
             }
         }
