@@ -3,41 +3,44 @@ package com.mcc.construction.data.remote
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.postgrest.postgrest
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.decodeFromJsonElement
-import kotlinx.serialization.json.put
+import kotlinx.serialization.json.*
 
 class BackendSessionRequiredException :
-    IllegalStateException("Sign in before performing this operation.")
+    IllegalStateException(
+        "Sign in before performing this operation."
+    )
 
 class BackendAccountChangedException :
     IllegalStateException(
         "This operation belongs to a different signed-in account."
     )
 
-/**
- * Calls the validated PostgreSQL operation gateway.
- *
- * A caller retrying a failed network request must reuse the same operation.
- * Server errors and coroutine cancellation propagate to the caller.
- */
 class BackendGateway(
     private val client: SupabaseClient,
-    private val refreshBus: BackendRefreshBus,
-    private val canWrite: () -> Boolean = { true }
+    private val refreshBus: BackendRefreshBus
 ) {
+
     val json: Json = Json {
         ignoreUnknownKeys = true
         encodeDefaults = true
+    }
+
+    @Volatile
+    private var writeGuard: () -> Unit = {}
+
+    /**
+     * Installed by the real application container before exposing
+     * repositories to the UI.
+     */
+    fun setWriteGuard(guard: () -> Unit) {
+        writeGuard = guard
     }
 
     fun prepare(
         action: BackendAction,
         payload: JsonObject
     ): BackendOperation {
-        val userId = client.auth.currentUserOrNull()?.id
+        val accountId = client.auth.currentUserOrNull()?.id
             ?: throw BackendSessionRequiredException()
 
         if (client.auth.currentSessionOrNull() == null) {
@@ -45,18 +48,17 @@ class BackendGateway(
         }
 
         return BackendOperation.create(
-            authUserId = userId,
+            authUserId = accountId,
             action = action,
             payload = payload
         )
     }
 
-    suspend fun execute(operation: BackendOperation): JsonObject {
-        check(canWrite()) {
-            "This action requires an online connection."
-        }
-
+    suspend fun execute(
+        operation: BackendOperation
+    ): JsonObject {
         requireMatchingAccount(operation)
+        writeGuard()
 
         val parameters = buildJsonObject {
             put("p_operation_id", operation.operationId)
@@ -78,10 +80,14 @@ class BackendGateway(
     suspend inline fun <reified T> executeAs(
         operation: BackendOperation
     ): T {
-        return json.decodeFromJsonElement<T>(execute(operation))
+        return json.decodeFromJsonElement<T>(
+            execute(operation)
+        )
     }
 
-    private fun requireMatchingAccount(operation: BackendOperation) {
+    private fun requireMatchingAccount(
+        operation: BackendOperation
+    ) {
         val currentUserId = client.auth.currentUserOrNull()?.id
             ?: throw BackendSessionRequiredException()
 
