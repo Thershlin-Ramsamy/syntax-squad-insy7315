@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backend_operation_failed">The operation could not be confirmed. Check your connection and refresh before trying again.</string>
+</resources>
