@@ -31,14 +31,15 @@ class SupabaseAppContainer(
         gateway = services.gateway,
         reads = services.reads,
         scope = services.scope,
-        clock = services.clock
+        clock = services.clock,
+        organisation = services.systemSettingsRepository
     )
 
     override val syncRepository: SyncRepository =
         PolicySyncRepository(
-            delegate = remoteSync,
-            organisation = services.systemSettingsRepository,
-            scope = services.scope
+            remoteSync,
+            services.systemSettingsRepository,
+            services.scope
         )
 
     override val messageRepository: MessageRepository =

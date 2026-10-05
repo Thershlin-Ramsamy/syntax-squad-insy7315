@@ -3,10 +3,7 @@ package com.mcc.construction.data.remote
 import android.content.Context
 import com.mcc.construction.data.model.*
 import com.mcc.construction.data.remote.dto.OfflineSyncRow
-import com.mcc.construction.data.repository.AuthRepository
-import com.mcc.construction.data.repository.SyncRepository
-import com.mcc.construction.data.repository.SyncResult
-import com.mcc.construction.data.repository.SystemSettingsRepository
+import com.mcc.construction.data.repository.*
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import java.time.Clock
@@ -31,7 +28,7 @@ class SupabaseSyncRepository(
     private val reads: BackendReadStore,
     scope: CoroutineScope,
     private val clock: Clock,
-    private val organisationSettings: SystemSettingsRepository? = null
+    private val organisation: SystemSettingsRepository? = null
 ) : SyncRepository {
 
     private val preferences = context.applicationContext
@@ -40,7 +37,7 @@ class SupabaseSyncRepository(
             Context.MODE_PRIVATE
         )
 
-    private val deviceId: String =
+    private val deviceId =
         preferences.getString("device_id", null)
             ?: UUID.randomUUID().toString().also {
                 check(
@@ -53,7 +50,6 @@ class SupabaseSyncRepository(
     private val offline = MutableStateFlow(
         preferences.getBoolean("offline_mode", false)
     )
-
     private val syncing = MutableStateFlow(false)
     private val lastSynced = MutableStateFlow<LocalDateTime?>(null)
     private val mutableLastError = MutableStateFlow<String?>(null)
@@ -63,6 +59,9 @@ class SupabaseSyncRepository(
 
     private val syncMutex = Mutex()
 
+    private val settingsFlow: StateFlow<SystemSettings> =
+        organisation?.settings ?: MutableStateFlow(SystemSettings())
+
     private val baseStatus = combine(
         network.available,
         offline,
@@ -70,7 +69,6 @@ class SupabaseSyncRepository(
         outbox.entries
     ) { available, offlineMode, session, entries ->
         val accountId = client.auth.currentUserOrNull()?.id
-
         val owned = if (session == null || accountId == null) {
             emptyList()
         } else {
@@ -95,88 +93,64 @@ class SupabaseSyncRepository(
         )
     }
 
-    override val status: StateFlow<SyncStatus> = combine(
-        baseStatus,
-        syncing,
-        lastSynced
-    ) { base, running, last ->
-        base.copy(
-            isSyncing = running,
-            lastSyncedAt = last
+    override val status: StateFlow<SyncStatus> =
+        combine(baseStatus, syncing, lastSynced) { base, running, last ->
+            base.copy(
+                isSyncing = running,
+                lastSyncedAt = last
+            )
+        }.stateIn(
+            scope,
+            SharingStarted.Eagerly,
+            SyncStatus.Initial.copy(
+                isNetworkAvailable = false
+            )
         )
-    }.stateIn(
-        scope,
-        SharingStarted.Eagerly,
-        SyncStatus.Initial.copy(
-            isNetworkAvailable = false
-        )
-    )
 
     init {
         scope.launch {
-            var nextAttemptAt = 0L
-            var previousOnline = false
-            var previousIds = emptySet<String>()
+            combine(
+                AppForeground.active,
+                auth.session.map { it?.user?.userId }.distinctUntilChanged(),
+                settingsFlow.map {
+                    it.syncIntervalMinutes
+                }.distinctUntilChanged(),
+                combine(
+                    network.available,
+                    offline
+                ) { available, offlineMode ->
+                    available && !offlineMode
+                }.distinctUntilChanged()
+            ) { foreground, userId, interval, online ->
+                ScheduleState(
+                    enabled = foreground && userId != null && online,
+                    userId = userId,
+                    intervalMinutes = interval
+                )
+            }.distinctUntilChanged().collectLatest { schedule ->
+                if (!schedule.enabled) return@collectLatest
 
-            while (true) {
-                val policy = organisationSettings?.settings?.value
-
-                if (
-                    offline.value &&
-                    policy?.allowOfflineMode == false
-                ) {
-                    try {
-                        setOfflineMode(false)
-                    } catch (exception: CancellationException) {
-                        throw exception
-                    } catch (_: Exception) {
-                        mutableLastError.value =
-                            "The offline preference could not be updated."
-                    }
-                }
-
-                val online = network.available.value &&
-                        !offline.value &&
-                        auth.session.value != null
-
-                val ids = outbox.entries.value.map {
-                    it.operation.operationId
-                }.toSet()
-
-                val now = clock.millis()
-
-                if (
-                    online &&
-                    (
-                            !previousOnline ||
-                                    ids != previousIds ||
-                                    now >= nextAttemptAt
-                            )
-                ) {
+                while (true) {
                     try {
                         syncNow()
-
-                        nextAttemptAt = now +
-                                (policy?.syncIntervalMinutes ?: 15) * 60_000L
                     } catch (exception: CancellationException) {
                         throw exception
                     } catch (_: Exception) {
-                        nextAttemptAt = now + RETRY_MILLIS
+                        // The queue is retained; retry at the configured interval.
                     }
+
+                    delay(
+                        SyncSchedule.intervalMillis(
+                            schedule.intervalMinutes
+                        )
+                    )
                 }
-
-                previousOnline = online
-                previousIds = outbox.entries.value.map {
-                    it.operation.operationId
-                }.toSet()
-
-                delay(1_000L)
             }
         }
     }
 
-    override fun observeHistory(): Flow<List<OfflineSync>> {
-        return reads.observeRows<OfflineSyncRow>(
+    override fun observeHistory(): Flow<List<OfflineSync>> =
+        reads.observeRows<OfflineSyncRow>(
             table = "offline_sync",
             primaryKey = "sync_id"
         ).map { rows ->
@@ -188,21 +162,10 @@ class SupabaseSyncRepository(
                     syncStatus = SyncOutcome.valueOf(it.syncStatus),
                     timestamp = BackendTime.timestamp(it.timestamp)
                 )
-            }.sortedByDescending {
-                it.timestamp
-            }
+            }.sortedByDescending { it.timestamp }
         }
-    }
 
     override suspend fun setOfflineMode(enabled: Boolean) {
-        check(
-            !enabled ||
-                    organisationSettings?.settings?.value?.allowOfflineMode !=
-                    false
-        ) {
-            "Offline mode is disabled by the administrator."
-        }
-
         check(
             preferences.edit()
                 .putBoolean("offline_mode", enabled)
@@ -228,10 +191,8 @@ class SupabaseSyncRepository(
 
             val session = auth.session.value
                 ?: throw BackendSessionRequiredException()
-
             val accountId = client.auth.currentUserOrNull()?.id
                 ?: throw BackendSessionRequiredException()
-
             val applicationUserId = session.user.userId
 
             val pending = outbox.entries.value.filter {
@@ -239,13 +200,12 @@ class SupabaseSyncRepository(
             }
 
             if (pending.isEmpty()) {
+                mutableLastError.value = null
                 return SyncResult.Success(0)
             }
 
-            lastSynced.value = null
             syncing.value = true
             mutableLastError.value = null
-
             var uploaded = 0
 
             for (entry in pending) {
@@ -254,8 +214,7 @@ class SupabaseSyncRepository(
                 }
 
                 if (
-                    auth.session.value?.user?.userId !=
-                    applicationUserId ||
+                    auth.session.value?.user?.userId != applicationUserId ||
                     client.auth.currentUserOrNull()?.id != accountId
                 ) {
                     throw BackendAccountChangedException()
@@ -270,20 +229,19 @@ class SupabaseSyncRepository(
 
             try {
                 if (
-                    auth.session.value?.user?.userId ==
-                    applicationUserId &&
+                    auth.session.value?.user?.userId == applicationUserId &&
                     client.auth.currentUserOrNull()?.id == accountId
                 ) {
-                    val historyOperation = gateway.prepare(
-                        BackendAction.SYNC_RECORD,
-                        buildJsonObject {
-                            put("device_id", deviceId)
-                            put("sync_status", "COMPLETED")
-                            put("uploaded_count", uploaded)
-                        }
+                    gateway.execute(
+                        gateway.prepare(
+                            BackendAction.SYNC_RECORD,
+                            buildJsonObject {
+                                put("device_id", deviceId)
+                                put("sync_status", "COMPLETED")
+                                put("uploaded_count", uploaded)
+                            }
+                        )
                     )
-
-                    gateway.execute(historyOperation)
                 }
             } catch (exception: CancellationException) {
                 throw exception
@@ -305,7 +263,9 @@ class SupabaseSyncRepository(
         }
     }
 
-    companion object {
-        private const val RETRY_MILLIS = 15_000L
-    }
+    private data class ScheduleState(
+        val enabled: Boolean,
+        val userId: Int?,
+        val intervalMinutes: Int
+    )
 }
