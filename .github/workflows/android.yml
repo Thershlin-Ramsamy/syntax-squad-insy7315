@@ -12,24 +12,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-java@v4
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools'
+          log-accepted-android-sdk-licenses: false
 
-      - name: Install the project's compile SDK
-        run: sdkmanager 'platforms;android-37'
+      - name: Install compile SDK
+        run: sdkmanager "platforms;android-37"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-      - name: Unit tests, debug build and lint
+      - name: Run unit tests, build and lint
         run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug --stacktrace
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload test and lint reports
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: android-reports
