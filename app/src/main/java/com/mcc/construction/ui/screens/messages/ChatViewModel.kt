@@ -15,6 +15,7 @@ import com.mcc.construction.ui.common.UiMessage
 import com.mcc.construction.ui.common.appContainer
 import java.time.Clock
 import java.time.LocalDate
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,22 +33,16 @@ data class ChatUiState(
     val isLoading: Boolean = true,
     val participant: User? = null,
     val myUserId: Int? = null,
-    /** Oldest first — chat order. */
     val messages: List<Message> = emptyList(),
     val draft: String = "",
     val isSending: Boolean = false,
     val today: LocalDate = LocalDate.MIN,
     val message: UiMessage? = null
 ) {
-    val canSend: Boolean get() = draft.isNotBlank() && !isSending
+    val canSend: Boolean
+        get() = draft.isNotBlank() && !isSending
 }
 
-/**
- * One conversation. Messages are kept in the MessageRepository for the whole
- * session, so leaving and coming back shows everything sent. Opening the chat
- * marks the other person's messages as read, including ones that arrive while
- * it is open.
- */
 class ChatViewModel(
     private val otherUserId: Int,
     private val authRepository: AuthRepository,
@@ -60,9 +55,17 @@ class ChatViewModel(
     private val transient = MutableStateFlow(Transient())
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val thread = authRepository.session.flatMapLatest { session ->
-        if (session == null) flowOf(null) else messageRepository.observeThread(session.user.userId, otherUserId)
-    }
+    private val thread = authRepository.session
+        .flatMapLatest { session ->
+            if (session == null) {
+                flowOf(null)
+            } else {
+                messageRepository.observeThread(
+                    session.user.userId,
+                    otherUserId
+                )
+            }
+        }
 
     val uiState: StateFlow<ChatUiState> = combine(
         thread,
@@ -80,41 +83,128 @@ class ChatViewModel(
             today = LocalDate.now(clock),
             message = extra.message
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), ChatUiState())
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS),
+        ChatUiState()
+    )
 
     init {
-        // Keep the thread read while it is open.
         thread.onEach { messages ->
-            val me = authRepository.session.value?.user?.userId ?: return@onEach
-            if (messages.orEmpty().any { it.receiverId == me && !it.isRead }) {
-                messageRepository.markThreadRead(me, otherUserId)
+            val me = authRepository.session.value
+                ?.user?.userId ?: return@onEach
+
+            if (
+                messages.orEmpty().any {
+                    it.receiverId == me && !it.isRead
+                }
+            ) {
+                try {
+                    messageRepository.markThreadRead(
+                        me,
+                        otherUserId
+                    )
+                } catch (exception: CancellationException) {
+                    throw exception
+                } catch (_: Exception) {
+                    transient.update {
+                        it.copy(
+                            message = UiMessage(
+                                R.string.backend_operation_failed,
+                                isError = true
+                            )
+                        )
+                    }
+                }
             }
         }.launchIn(viewModelScope)
     }
 
-    fun onDraftChange(text: String) = transient.update { it.copy(draft = text) }
+    fun onDraftChange(text: String) {
+        transient.update {
+            it.copy(draft = text)
+        }
+    }
 
-    fun onSend() = send(transient.value.draft, clearDraft = true)
+    fun onSend() {
+        send(transient.value.draft, clearDraft = true)
+    }
 
-    /** Sends a ready-made reply in one tap — no typing with gloves on. */
-    fun onQuickReply(text: String) = send(text, clearDraft = false)
+    fun onQuickReply(text: String) {
+        send(text, clearDraft = false)
+    }
 
-    fun onMessageShown() = transient.update { it.copy(message = null) }
+    fun onMessageShown() {
+        transient.update {
+            it.copy(message = null)
+        }
+    }
 
-    private fun send(text: String, clearDraft: Boolean) {
-        val me = authRepository.session.value?.user?.userId ?: return
+    private fun send(
+        text: String,
+        clearDraft: Boolean
+    ) {
+        val me = authRepository.session.value
+            ?.user?.userId ?: return
+
         val content = text.trim()
-        if (content.isEmpty() || transient.value.isSending) return
-        transient.update { it.copy(isSending = true) }
+
+        if (
+            content.isEmpty() ||
+            transient.value.isSending
+        ) {
+            return
+        }
+
+        transient.update {
+            it.copy(isSending = true)
+        }
+
         viewModelScope.launch {
-            messageRepository.sendMessage(me, otherUserId, content)
-            val offline = !syncRepository.status.value.isOnline
-            transient.update {
-                it.copy(
-                    isSending = false,
-                    draft = if (clearDraft) "" else it.draft,
-                    message = if (offline) UiMessage(R.string.chat_sent_offline) else null
+            try {
+                val saved = messageRepository.sendMessage(
+                    me,
+                    otherUserId,
+                    content
                 )
+
+                val feedback = when {
+                    saved.messageId < 0 ->
+                        UiMessage(R.string.backend_message_queued)
+
+                    !syncRepository.status.value.isOnline ->
+                        UiMessage(R.string.chat_sent_offline)
+
+                    else -> null
+                }
+
+                transient.update {
+                    it.copy(
+                        draft = if (
+                            clearDraft && it.draft == text
+                        ) {
+                            ""
+                        } else {
+                            it.draft
+                        },
+                        message = feedback
+                    )
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (_: Exception) {
+                transient.update {
+                    it.copy(
+                        message = UiMessage(
+                            R.string.backend_operation_failed,
+                            isError = true
+                        )
+                    )
+                }
+            } finally {
+                transient.update {
+                    it.copy(isSending = false)
+                }
             }
         }
     }
@@ -131,9 +221,14 @@ class ChatViewModel(
         fun factory(otherUserId: Int) = viewModelFactory {
             initializer {
                 val c = appContainer()
+
                 ChatViewModel(
-                    otherUserId, c.authRepository, c.messageRepository,
-                    c.userRepository, c.syncRepository, c.clock
+                    otherUserId,
+                    c.authRepository,
+                    c.messageRepository,
+                    c.userRepository,
+                    c.syncRepository,
+                    c.clock
                 )
             }
         }

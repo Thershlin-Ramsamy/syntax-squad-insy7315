@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="backend_operation_failed">The operation could not be confirmed. Check your connection and refresh before trying again.</string>
+    <string name="backend_message_queued">Message saved on this device. It will upload when you are signed in and online.</string>
+    <string name="backend_choose_file">Choose file</string>
+    <string name="backend_file_required">Choose a file before uploading.</string>
+    <string name="backend_upload_in_progress">Uploading file…</string>
+    <string name="backend_open_document">Open file</string>
+    <string name="backend_no_file_viewer">No application is available to open this file.</string>
+    <string name="backend_download_unavailable">File downloads are unavailable in demo mode.</string>
+    <string name="backend_error_title">Unable to complete operation</string>
 </resources>
