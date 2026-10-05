@@ -23,8 +23,9 @@ This backend provides server operations for:
 - Upload reservations, document versions and task photographs.
 - Sync history and operation retry receipts.
 
-Android repository integration is delivered separately. Creating the database
-does not replace FakeAppContainer.
+The Android application now uses SupabaseAppContainer. FakeAppContainer is
+retained for tests and previews. Creating the database alone does not configure
+the Android project URL, publishable key, or Auth user profiles.
 
 ## Migration procedure
 
