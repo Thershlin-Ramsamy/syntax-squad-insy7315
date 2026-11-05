@@ -24,24 +24,28 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
-          packages: 'platform-tools'
+          packages: 'platform-tools platforms;android-36'
           log-accepted-android-sdk-licenses: false
-
-      - name: Install compile SDK
-        run: sdkmanager "platforms;android-36"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run unit tests, build and lint
-        run: bash ./gradlew :app:testDebugUnitTest :app:assembleDebug :app:lintDebug --stacktrace
+        run: >-
+          bash ./gradlew
+          :app:testDebugUnitTest
+          :app:assembleDebug
+          :app:lintDebug
+          --continue
+          --stacktrace
 
       - name: Upload test and lint reports
-        uses: actions/upload-artifact@v4
         if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: android-reports
           path: |
-            app/build/reports/tests/
+            app/build/reports/tests/testDebugUnitTest/
+            app/build/test-results/testDebugUnitTest/
             app/build/reports/lint-results-debug.html
-          if-no-files-found: ignore
+          if-no-files-found: warn
