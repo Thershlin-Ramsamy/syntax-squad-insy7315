@@ -3,6 +3,8 @@ package com.mcc.construction.ui.screens.tasks
 import com.mcc.construction.R
 import com.mcc.construction.data.fake.FakeAppContainer
 import com.mcc.construction.data.model.TaskStatus
+import com.mcc.construction.data.remote.WritePolicy
+import com.mcc.construction.data.repository.TaskRepository
 import com.mcc.construction.ui.MainDispatcherRule
 import com.mcc.construction.ui.screens.keepCollecting
 import com.mcc.construction.ui.screens.workerContainer
@@ -93,17 +95,32 @@ class TaskDetailViewModelTest {
     }
 
     @Test
-    fun offlineCompletionSaysItIsQueued() = runTest {
+    fun offlineCompletionIsRejected() = runTest {
         val c = workerContainer()
         c.syncRepository.setOfflineMode(true)
-        val vm = viewModel(c, 101)
+        var attempts = 0
+        val repository = object : TaskRepository by c.taskRepository {
+            override suspend fun updateStatus(taskId: Int, status: TaskStatus) {
+                attempts++
+                WritePolicy.requireOnline(c.syncRepository.status.value)
+                c.taskRepository.updateStatus(taskId, status)
+            }
+        }
+        val vm = TaskDetailViewModel(
+            101, c.authRepository, repository, c.projectRepository,
+            c.userRepository, c.syncRepository, c.clock
+        )
         keepCollecting(vm.uiState)
+        val pendingBefore = c.syncRepository.status.value.pendingCount
 
         vm.onAdvanceStatus()
         vm.onCompleteWithoutPhoto()
 
-        assertEquals(R.string.task_completed_offline_message, vm.uiState.value.message?.textRes)
-        assertTrue(c.syncRepository.status.value.pendingCount > 2)
+        assertEquals(1, attempts)
+        assertEquals(TaskStatus.IN_PROGRESS, c.taskRepository.observeTask(101).first()?.status)
+        assertEquals(pendingBefore, c.syncRepository.status.value.pendingCount)
+        assertNull(vm.uiState.value.message)
+        assertFalse(vm.uiState.value.isUpdating)
     }
 
     @Test

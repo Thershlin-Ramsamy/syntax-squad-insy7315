@@ -1,8 +1,12 @@
 package com.mcc.construction.ui.screens.worker
 
 import com.mcc.construction.data.fake.FakeAppContainer
+import com.mcc.construction.data.model.DailyReport
 import com.mcc.construction.data.model.ReportStatus
 import com.mcc.construction.data.model.Weather
+import com.mcc.construction.data.remote.WritePolicy
+import com.mcc.construction.data.repository.DailyReportDraft
+import com.mcc.construction.data.repository.DailyReportRepository
 import com.mcc.construction.ui.MainDispatcherRule
 import com.mcc.construction.ui.screens.WORKER_ID
 import com.mcc.construction.ui.screens.keepCollecting
@@ -12,6 +16,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -86,18 +91,36 @@ class DailyReportViewModelTest {
     }
 
     @Test
-    fun offlineSubmissionIsFlagged() = runTest {
+    fun offlineSubmissionIsRejectedAndKeepsDraft() = runTest {
         val c = workerContainer()
         c.syncRepository.setOfflineMode(true)
-        val vm = viewModel(c)
+        var attempts = 0
+        val repository = object : DailyReportRepository by c.dailyReportRepository {
+            override suspend fun submitReport(draft: DailyReportDraft): DailyReport {
+                attempts++
+                WritePolicy.requireOnline(c.syncRepository.status.value)
+                return c.dailyReportRepository.submitReport(draft)
+            }
+        }
+        val vm = DailyReportViewModel(
+            c.authRepository, c.projectRepository, c.taskRepository,
+            repository, c.syncRepository, c.clock
+        )
         keepCollecting(vm.uiState)
+        val reportsBefore = c.dailyReportRepository.observeReportsBy(WORKER_ID).first()
 
         vm.onWeatherSelected(Weather.RAINY)
         vm.onWorkCompletedChange("Rain stopped work at 10:00")
         vm.onSubmitClick()
         vm.onConfirmSubmit()
 
-        assertTrue(vm.uiState.value.form.submittedOffline)
+        assertEquals(1, attempts)
+        val form = vm.uiState.value.form
+        assertNull(form.submitted)
+        assertFalse(form.isSubmitting)
+        assertEquals(Weather.RAINY, form.weather)
+        assertEquals("Rain stopped work at 10:00", form.workCompleted)
+        assertEquals(reportsBefore, c.dailyReportRepository.observeReportsBy(WORKER_ID).first())
     }
 
     @Test

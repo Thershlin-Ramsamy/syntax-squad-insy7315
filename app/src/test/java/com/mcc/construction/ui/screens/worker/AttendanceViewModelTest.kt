@@ -2,6 +2,9 @@ package com.mcc.construction.ui.screens.worker
 
 import com.mcc.construction.R
 import com.mcc.construction.data.fake.FakeAppContainer
+import com.mcc.construction.data.model.Attendance
+import com.mcc.construction.data.remote.WritePolicy
+import com.mcc.construction.data.repository.AttendanceRepository
 import com.mcc.construction.ui.MainDispatcherRule
 import com.mcc.construction.ui.screens.keepCollecting
 import com.mcc.construction.ui.screens.workerContainer
@@ -9,6 +12,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -50,14 +54,27 @@ class AttendanceViewModelTest {
     }
 
     @Test
-    fun offlineClockInSaysItIsQueued() = runTest {
+    fun offlineClockInIsRejected() = runTest {
         val c = workerContainer()
         c.syncRepository.setOfflineMode(true)
-        val vm = viewModel(c)
+        var attempts = 0
+        val repository = object : AttendanceRepository by c.attendanceRepository {
+            override suspend fun clockIn(userId: Int): Attendance {
+                attempts++
+                WritePolicy.requireOnline(c.syncRepository.status.value)
+                return c.attendanceRepository.clockIn(userId)
+            }
+        }
+        val vm = AttendanceViewModel(c.authRepository, repository, c.syncRepository, c.clock)
         keepCollecting(vm.uiState)
+        val shiftsBefore = vm.uiState.value.recentShifts
 
         vm.onClockInOut()
 
-        assertEquals(R.string.attendance_clocked_in_offline, vm.uiState.value.message?.textRes)
+        assertEquals(1, attempts)
+        assertFalse(vm.uiState.value.isClockedIn)
+        assertEquals(shiftsBefore, vm.uiState.value.recentShifts)
+        assertNull(vm.uiState.value.message)
+        assertFalse(vm.uiState.value.isUpdating)
     }
 }
